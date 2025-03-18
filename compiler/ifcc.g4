@@ -10,8 +10,15 @@ instruction: return_stmt ';' instruction
             | affectation ';' instruction 
             |  ;
 
-declaration: TYPE VAR
-            | TYPE affectation ;
+declaration: TYPE decl_element ;
+
+decl_element: VAR liste_decl
+            | affectation liste_decl ;
+
+liste_decl: ',' decl_element 
+            |  ;
+
+
 
 affectation: lvalue '=' rvalue ;
 

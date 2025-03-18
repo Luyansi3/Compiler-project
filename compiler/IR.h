@@ -1,19 +1,30 @@
-#ifndef IR_H
-#define IR_H
+#pragma once
 
 #include <vector>
 #include <string>
 #include <iostream>
+#include <ostream>
+#include <vector>
+#include <unordered_map>
 #include <initializer_list>
 
+using namespace std;
+
+#include "SymbolTableVisitor.h"
 // Declarations from the parser -- replace with your own
-#include "type.h"
-#include "symbole.h"
+// #include "type.h"
+// #include "symbole.h"
 
 class BasicBlock;
 class CFG;
-class DefFonction;
+// class DefFonction;
 
+// typedef struct Flag
+// {
+//     int index;
+//     bool used;
+//     bool affected;
+// }Flag;
 
 //! The class for one 3-address instruction
 class IRInstr {
@@ -36,17 +47,53 @@ class IRInstr {
 
 
 	/**  constructor */
-	IRInstr(BasicBlock* bb_, Operation op, Type t, vector<string> params);
+	IRInstr(BasicBlock* bb_): bb(bb_) {}
 	
 	/** Actual code generation */
-	void gen_asm(ostream &o); /**< x86 assembly code generation for this IR instruction */
+	virtual void gen_asm(ostream &o) = 0; /**< x86 assembly code generation for this IR instruction */
 	
- private:
+ protected:
 	BasicBlock* bb; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belong to */
 	Operation op;
-	Type t;
+	//Type t;
 	vector<string> params; /**< For 3-op instrs: d, x, y; for ldconst: d, c;  For call: label, d, params;  for wmem and rmem: choose yourself */
 	// if you subclass IRInstr, each IRInstr subclass has its parameters and the previous (very important) comment becomes useless: it would be a better design. 
+};
+
+
+class IRInstrLDConst : public IRInstr
+{
+private:
+	string dest;
+	int val;
+public:
+	IRInstrLDConst(BasicBlock* bb, string dest, int val): IRInstr(bb), dest(dest), val(val){};
+	virtual void gen_asm(ostream &o) override;
+
+};
+
+class IRInstrCopy : public IRInstr
+{
+private:
+	string dest;
+	string src;
+public:
+	IRInstrCopy(BasicBlock* bb, string dest, string src): IRInstr(bb), dest(dest), src(src){};
+	virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrPrologue : public IRInstr
+{
+public:
+	IRInstrPrologue(BasicBlock* bb): IRInstr(bb) {}
+	virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrEpilogue : public IRInstr
+{
+public:
+	IRInstrEpilogue(BasicBlock* bb): IRInstr(bb){}
+	virtual void gen_asm(ostream &o) override;
 };
 
 
@@ -82,10 +129,10 @@ Possible optimization:
 
 class BasicBlock {
  public:
-	BasicBlock(CFG* cfg, string entry_label);
+	BasicBlock(CFG* cfg, string entry_label): cfg(cfg), label(entry_label) {}
 	void gen_asm(ostream &o); /**< x86 assembly code generation for this basic block (very simple) */
 
-	void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
+	void add_IRInstr(IRInstr* inst);
 
 	// No encapsulation whatsoever here. Feel free to do better.
 	BasicBlock* exit_true;  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */ 
@@ -112,13 +159,34 @@ class BasicBlock {
      (again it could be identified in a more explicit way)
 
  */
+
 class CFG {
  public:
-	CFG(DefFonction* ast);
+	CFG(/*DefFonction* ast*/unordered_map<string, Flag>& symbolIndex, string nameFunction):symbolIndex(symbolIndex), 
+	nextBBnumber(0), nameFunction(nameFunction)
+	{
+		BasicBlock* bb_prologue = new BasicBlock(this, nameFunction);
+		bb_prologue->add_IRInstr(new IRInstrPrologue(bb_prologue));
+		add_bb(bb_prologue);
+		
+		BasicBlock* bb_body = new BasicBlock(this, new_BB_name());
+		nextBBnumber++;
+		add_bb(bb_body);
+		current_bb = bb_body;
+		bb_prologue->exit_true=bb_body;
 
-	DefFonction* ast; /**< The AST this CFG comes from */
+
+		BasicBlock* bb_epilogue = new BasicBlock(this, nameFunction + "_epilogue");
+		bb_epilogue->add_IRInstr(new IRInstrEpilogue(bb_epilogue));
+		add_bb(bb_epilogue);
+		bb_body->exit_true = bb_epilogue;
+
+
+	}
+
+	// DefFonction* ast; /**< The AST this CFG comes from */
 	
-	void add_bb(BasicBlock* bb); 
+	void add_bb(BasicBlock* bb);
 
 	// x86 code generation: could be encapsulated in a processor class in a retargetable compiler
 	void gen_asm(ostream& o);
@@ -127,23 +195,20 @@ class CFG {
 	void gen_asm_epilogue(ostream& o);
 
 	// symbol table methods
-	void add_to_symbol_table(string name, Type t);
-	string create_new_tempvar(Type t);
+	// void add_to_symbol_table(string name, Type t);
+	// string create_new_tempvar(Type t);
 	int get_var_index(string name);
-	Type get_var_type(string name);
+	// Type get_var_type(string name);
 
 	// basic block management
 	string new_BB_name();
 	BasicBlock* current_bb;
 
  protected:
-	map <string, Type> SymbolType; /**< part of the symbol table  */
-	map <string, int> SymbolIndex; /**< part of the symbol table  */
+ 	unordered_map<string, Flag> symbolIndex; /**< part of the symbol table  */
 	int nextFreeSymbolIndex; /**< to allocate new symbols in the symbol table */
 	int nextBBnumber; /**< just for naming */
-	
+	string nameFunction;
 	vector <BasicBlock*> bbs; /**< all the basic blocks of this CFG*/
 };
 
-
-#endif

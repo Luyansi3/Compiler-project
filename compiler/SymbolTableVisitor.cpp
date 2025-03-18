@@ -1,6 +1,6 @@
 #include "SymbolTableVisitor.h"
 
-antlrcpp::Any SymbolTableVisitor::visitDeclaration(ifccParser::DeclarationContext *ctx) 
+antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementContext *ctx) 
 {
     if(ctx->affectation()){
         string var = ctx->affectation()->lvalue()->VAR()->getText();
@@ -34,6 +34,7 @@ antlrcpp::Any SymbolTableVisitor::visitDeclaration(ifccParser::DeclarationContex
             exit(1);
         }
     }
+    this->visit(ctx->liste_decl());
     
     
     return 0;

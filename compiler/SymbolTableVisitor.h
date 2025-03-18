@@ -18,7 +18,7 @@ class  SymbolTableVisitor : public ifccBaseVisitor {
         unordered_map<string, Flag> symbolTable;
 
         SymbolTableVisitor():  ifccBaseVisitor(), index(-4) { }
-        virtual antlrcpp::Any visitDeclaration(ifccParser::DeclarationContext *ctx) override ;
+        virtual antlrcpp::Any visitDecl_element(ifccParser::Decl_elementContext *ctx) override ;
         virtual antlrcpp::Any visitAffectation(ifccParser::AffectationContext *ctx) override;
         virtual antlrcpp::Any visitRvalue(ifccParser::RvalueContext *ctx) override;
     private:

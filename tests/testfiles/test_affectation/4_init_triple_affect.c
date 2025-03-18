@@ -4,6 +4,7 @@ int main() {
     int b=23;
     int a = b;
     int c;
-    c = a = b;
+    int d;
+    d= c = a = b;
     return c;
 }
