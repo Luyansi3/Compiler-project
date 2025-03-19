@@ -2,7 +2,7 @@ grammar ifcc;
 
 axiom : prog EOF ;
 
-prog : TYPE INT OPENPAR CLOSEPAR block ;
+prog : type MAIN OPENPAR CLOSEPAR block ;
 block: OPENCROCHET instruction CLOSECROCHET ;
 
 instruction: return_stmt  SEMI  instruction 
@@ -10,7 +10,7 @@ instruction: return_stmt  SEMI  instruction
             | expr  SEMI instruction
             | ;
 
-declaration: TYPE decl_element ;
+declaration: type decl_element ;
 
 decl_element: VAR liste_decl
             | affectation liste_decl ;
@@ -38,20 +38,17 @@ opU: MINUS | ;
 opA: PLUS | MINUS ;
 opM: DIV | MULT ;
 
+type: INT;
+
 INT: 'int' ;
 RETURN : 'return' ;
+MAIN: 'main';
 VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
 CONST : [0-9]+ ;
-COMMENT : '/*' .*? '*/' -> skip ;
-DIRECTIVE : '#' .*? '\n' -> skip ;
-WS    : [ \t\r\n] -> channel(HIDDEN);
-
-
 OPENPAR       : '(';
 CLOSEPAR      : ')';
 OPENCROCHET   : '{';
 CLOSECROCHET  : '}';
-TYPE          : 'int';
 SEMI          : ';';
 EQUAL         : '=';
 PLUS          : '+';
@@ -59,3 +56,6 @@ MINUS         : '-';
 MULT          : '*';
 DIV           : '/';
 COMMA         : ',';
+COMMENT : '/*' .*? '*/' -> skip ;
+DIRECTIVE : '#' .*? '\n' -> skip ;
+WS    : [ \t\r\n] -> channel(HIDDEN);
