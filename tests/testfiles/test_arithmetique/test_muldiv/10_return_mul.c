@@ -1,6 +1,6 @@
 #include <inttypes.h>
 
 int main() {
-    int a;
-    return a;
+ 
+    return 5 * 2;
 }

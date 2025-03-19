@@ -1,6 +1,6 @@
 #include "SymbolTableVisitor.h"
 
-antlrcpp::Any SymbolTableVisitor::visitDeclaration(ifccParser::DeclarationContext *ctx) 
+antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementContext *ctx) 
 {
     if(ctx->affectation()){
         string var = ctx->affectation()->lvalue()->VAR()->getText();
@@ -34,6 +34,7 @@ antlrcpp::Any SymbolTableVisitor::visitDeclaration(ifccParser::DeclarationContex
             exit(1);
         }
     }
+    this->visit(ctx->liste_decl());
     
     
     return 0;
@@ -49,24 +50,19 @@ antlrcpp::Any SymbolTableVisitor::visitAffectation(ifccParser::AffectationContex
         symbolTable[varName].affected = true;
     }
     this->visit(ctx->lvalue());
-    this->visit(ctx->rvalue());
+    this->visit(ctx->expr());
     return 0;
 }
 
-antlrcpp::Any SymbolTableVisitor::visitRvalue(ifccParser::RvalueContext *ctx){
-    // cout << "VAR " << ctx->VAR()->getText() << endl;
-    if(ctx->VAR()){
-        string varName = ctx->VAR()->getText();
-        if(symbolTable.find(varName)!=symbolTable.end()){
-            symbolTable[varName].used = true;
-        }
-        else{
-            cerr << "Variable " << varName << " non déclarée" << endl;
-            exit(1);
-        }
+antlrcpp::Any SymbolTableVisitor::visitExprVar(ifccParser::ExprVarContext *ctx){
+
+    string varName = ctx->VAR()->getText();
+    if(symbolTable.find(varName)!=symbolTable.end()){
+        symbolTable[varName].used = true;
     }
-    if(ctx->affectation()){
-        this->visit(ctx->affectation());
+    else{
+        cerr << "Variable " << varName << " non déclarée" << endl;
+        exit(1);
     }
 
     return 0;

@@ -8,8 +8,9 @@
 #include "generated/ifccParser.h"
 #include "generated/ifccBaseVisitor.h"
 
-#include "CodeGenVisitor.h"
 #include "SymbolTableVisitor.h"
+#include "IR.h"
+#include "Linearize.h"
 
 using namespace antlr4;
 using namespace std;
@@ -49,11 +50,11 @@ int main(int argn, const char **argv)
       exit(1);
   }
 
-  SymbolTableVisitor vtable;
-  vtable.visit(tree);
+  SymbolTableVisitor table;
+  table.visit(tree);
   
 
-  for (auto it=vtable.symbolTable.begin(); it != vtable.symbolTable.end(); ++it){
+  for (auto it=table.symbolTable.begin(); it != table.symbolTable.end(); ++it){
     if (!it->second.used)
     {
         cerr << "Var " << it->first << " n'est pas utilisé" <<endl;
@@ -61,8 +62,14 @@ int main(int argn, const char **argv)
   }
   
 
-  CodeGenVisitor v(vtable.symbolTable);
-  v.visit(tree);
+  CFG cfg(table.symbolTable, "main");
+  
+
+  Linearize code(&cfg);
+  code.visit(tree);
+
+  cout << ".globl main\n" ;
+  cfg.gen_asm(cout);
 
   return 0;
 }
