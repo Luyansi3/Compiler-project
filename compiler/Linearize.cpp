@@ -19,7 +19,7 @@ antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
     //     int retval = stoi(ctx->rvalue()->CONST()->getText());
     //     std::cout << "    movl $"<<retval<<", %eax\n" ;
     // }
-    this->visit(ctx->rvalue());
+    this->visit(ctx->expr());
 
     return 0;
 }
@@ -38,28 +38,25 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
     //     std::cout << "    movl "<< symbolTable[varName2].index<<"(%rbp), " << symbolTable[varName].index <<"(%rbp)\n" ;
     // }
 
-    this->visit(ctx->rvalue());
+    this->visit(ctx->expr());
     this->visit(ctx->lvalue());
 
 
     return 0;
 }
 
-antlrcpp::Any Linearize::visitRvalue(ifccParser::RvalueContext *ctx){
+antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx){
 
+    string varName = ctx->VAR()->getText();
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
 
-    if(ctx->VAR()){
-        string varName = ctx->VAR()->getText();
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
-    }
-    else if(ctx->CONST()){
-        int retval = stoi(ctx->CONST()->getText());
-        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", retval));
-    }
-    else if (ctx->affectation())
-    {
-        this->visit(ctx->affectation());
-    }
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx){
+
+    int retval = stoi(ctx->CONST()->getText());
+    cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", retval));
     
     return 0;
 }

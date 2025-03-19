@@ -7,7 +7,6 @@ block: '{' instruction '}' ;
 
 instruction: return_stmt ';' instruction 
             | declaration ';' instruction 
-            | affectation ';' instruction 
             | expr ';' instruction
             | ;
 
@@ -21,24 +20,23 @@ liste_decl: ',' decl_element
 
 
 
-affectation: lvalue '=' rvalue ;
+affectation: lvalue '=' expr ;
 
-return_stmt: RETURN rvalue ;
-
-rvalue: affectation | expr ;
+return_stmt: RETURN expr ;
 
 lvalue: VAR ;
 
 expr: expr opM expr     #MulDiv
     | expr opA expr     #AddSous
     | opU '(' expr ')'  #Par
-    | opU VAR
-    | opU CONST ;
+    | opU VAR           #ExprVar
+    | opU CONST         #ExprConst 
+    | affectation       #ExprAffectation ;
 
 opU: '-' | ;
 
 opA: '+' | '-' ;
-opM: '/' | '*';
+opM: '/' | '*' ;
 
 TYPE: 'int' ;
 RETURN : 'return' ;

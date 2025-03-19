@@ -8,7 +8,6 @@
 #include "generated/ifccParser.h"
 #include "generated/ifccBaseVisitor.h"
 
-#include "CodeGenVisitor.h"
 #include "SymbolTableVisitor.h"
 #include "IR.h"
 #include "Linearize.h"

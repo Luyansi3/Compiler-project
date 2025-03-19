@@ -20,7 +20,7 @@ class  SymbolTableVisitor : public ifccBaseVisitor {
         SymbolTableVisitor():  ifccBaseVisitor(), index(-4) { }
         virtual antlrcpp::Any visitDecl_element(ifccParser::Decl_elementContext *ctx) override ;
         virtual antlrcpp::Any visitAffectation(ifccParser::AffectationContext *ctx) override;
-        virtual antlrcpp::Any visitRvalue(ifccParser::RvalueContext *ctx) override;
+        virtual antlrcpp::Any visitExprVar(ifccParser::ExprVarContext *ctx) override;
     private:
         int index;
 };
