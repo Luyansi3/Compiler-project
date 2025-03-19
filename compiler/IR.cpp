@@ -24,8 +24,21 @@ void IRInstrEpilogue::gen_asm(ostream &o){
     o << "    ret\n";
 }
 
+void IRInstrAdd::gen_asm(ostream&o)
+{   
+    string source1=this->bb->cfg->IR_reg_to_asm(src1);
+    string source2=this->bb->cfg->IR_reg_to_asm(src2);
+    o<< "   addl" << " " << source1<< ", " << source2 << "\n"; //add source, destination  # destination = destination + source
 
+}
 
+void IRInstrSub::gen_asm(ostream&o)
+{   
+    string source1=this->bb->cfg->IR_reg_to_asm(src1);
+    string source2=this->bb->cfg->IR_reg_to_asm(src2);
+
+    o<< "   subl" << " " << source1 << ", " << source2 << "\n";
+}
 void BasicBlock::gen_asm(ostream& o){
     o << " " << label << ":" << endl; 
     for(auto &instr : instrs){
@@ -33,7 +46,6 @@ void BasicBlock::gen_asm(ostream& o){
     }
 
 }
-
 void BasicBlock::add_IRInstr(IRInstr* instr){
     instrs.push_back(instr);
 }
@@ -78,4 +90,13 @@ void CFG::gen_asm_prologue(ostream &o){
 void CFG::gen_asm_epilogue(ostream &o){
     o<< "    popq %rbp\n";
     o << "    ret\n";
+}
+
+string CFG::create_new_tempvar()
+{
+    nextFreeSymbolIndex-=4;
+    string tmpVar="!tmp"+to_string(abs(nextFreeSymbolIndex));
+    Flag flag={nextFreeSymbolIndex,false,false};
+    symbolIndex.insert({tmpVar,flag});
+    return tmpVar;
 }
