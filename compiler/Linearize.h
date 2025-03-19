@@ -18,6 +18,7 @@ public:
     virtual antlrcpp::Any visitExprVar(ifccParser::ExprVarContext *ctx) override;
     virtual antlrcpp::Any visitExprConst(ifccParser::ExprConstContext *ctx) override;
     virtual antlrcpp::Any visitLvalue(ifccParser::LvalueContext *ctx) override;
+    virtual antlrcpp::Any visitMulDiv(ifccParser::MulDivContext *ctx) override;
 
 };
 
