@@ -8,7 +8,8 @@ block: '{' instruction '}' ;
 instruction: return_stmt ';' instruction 
             | declaration ';' instruction 
             | affectation ';' instruction 
-            |  ;
+            | expr ';' instruction
+            | ;
 
 declaration: TYPE decl_element ;
 
@@ -24,10 +25,20 @@ affectation: lvalue '=' rvalue ;
 
 return_stmt: RETURN rvalue ;
 
-rvalue: CONST | VAR | affectation ;
+rvalue: affectation | expr ;
 
 lvalue: VAR ;
 
+expr: expr opM expr     #MulDiv
+    | expr opA expr     #AddSous
+    | opU '(' expr ')'  #Par
+    | opU VAR
+    | opU CONST ;
+
+opU: '-' | ;
+
+opA: '+' | '-' ;
+opM: '/' | '*';
 
 TYPE: 'int' ;
 RETURN : 'return' ;
