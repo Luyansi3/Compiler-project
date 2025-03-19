@@ -71,6 +71,12 @@ void BasicBlock::add_IRInstr(IRInstr* instr){
     instrs.push_back(instr);
 }
 
+BasicBlock::~BasicBlock(){
+    for(auto &instr : instrs){
+        delete instr;
+    }
+}
+
 
 
 void CFG::add_bb(BasicBlock* bb){
@@ -120,4 +126,24 @@ string CFG::create_new_tempvar()
     Flag flag={nextFreeSymbolIndex,false,false};
     symbolIndex.insert({tmpVar,flag});
     return tmpVar;
+}
+
+CFG::CFG(unordered_map<string, Flag>& symbolIndex, string nameFunction): symbolIndex(symbolIndex), 
+    nextBBnumber(0), nameFunction(nameFunction), nextFreeSymbolIndex(symbolIndex.size()*-4)
+{
+    BasicBlock *bb_prologue = new BasicBlock(this, nameFunction);
+    bb_prologue->add_IRInstr(new IRInstrPrologue(bb_prologue));
+    add_bb(bb_prologue);
+
+    BasicBlock *bb_body = new BasicBlock(this, new_BB_name());
+    nextBBnumber++;
+    add_bb(bb_body);
+    current_bb = bb_body;
+    bb_prologue->exit_true = bb_body;
+}
+
+CFG::~CFG(){
+    for(auto &bb : bbs){
+        delete bb;
+    }
 }

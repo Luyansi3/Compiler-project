@@ -12,6 +12,11 @@ antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 {
 
     this->visit(ctx->expr());
+
+    BasicBlock *bb_epilogue = new BasicBlock(cfg, cfg->getNameFunction() + "_epilogue");
+    bb_epilogue->add_IRInstr(new IRInstrEpilogue(bb_epilogue));
+    cfg->add_bb(bb_epilogue);
+    cfg->current_bb->exit_true = bb_epilogue;
     return 0;
 }
 

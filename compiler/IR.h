@@ -52,14 +52,14 @@ public:
 
 	/** Actual code generation */
 	virtual void gen_asm(ostream &o) = 0; /**< x86 assembly code generation for this IR instruction */
+	virtual ~IRInstr(){}				  /**< destructor */
 
 protected:
 	BasicBlock *bb; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belong to */
-	Operation op;
+
 	// Type t;
-	vector<string> params; /**< For 3-op instrs: d, x, y; for ldconst: d, c;  For call: label, d, params;  for wmem and rmem: choose yourself */
-						   // if you subclass IRInstr, each IRInstr subclass has its parameters and the previous (very important) comment becomes useless: it would be a better design.
 };
+
 
 class IRInstrLDConst : public IRInstr
 {
@@ -177,6 +177,7 @@ class BasicBlock
 {
 public:
 	BasicBlock(CFG *cfg, string entry_label) : cfg(cfg), label(entry_label) {}
+	~BasicBlock();
 	void gen_asm(ostream &o); /**< x86 assembly code generation for this basic block (very simple) */
 
 	void add_IRInstr(IRInstr *inst);
@@ -204,24 +205,8 @@ protected:
 
 class CFG {
  public:
-	CFG(/*DefFonction* ast*/unordered_map<string, Flag>& symbolIndex, string nameFunction):symbolIndex(symbolIndex), 
-	nextBBnumber(0), nameFunction(nameFunction), nextFreeSymbolIndex(symbolIndex.size()*-4)
-	{
-		BasicBlock *bb_prologue = new BasicBlock(this, nameFunction);
-		bb_prologue->add_IRInstr(new IRInstrPrologue(bb_prologue));
-		add_bb(bb_prologue);
-
-		BasicBlock *bb_body = new BasicBlock(this, new_BB_name());
-		nextBBnumber++;
-		add_bb(bb_body);
-		current_bb = bb_body;
-		bb_prologue->exit_true = bb_body;
-
-		BasicBlock *bb_epilogue = new BasicBlock(this, nameFunction + "_epilogue");
-		bb_epilogue->add_IRInstr(new IRInstrEpilogue(bb_epilogue));
-		add_bb(bb_epilogue);
-		bb_body->exit_true = bb_epilogue;
-	}
+	CFG(unordered_map<string, Flag>& symbolIndex, string nameFunction);
+	~CFG();
 
 	// DefFonction* ast; /**< The AST this CFG comes from */
 
@@ -238,6 +223,8 @@ class CFG {
 	string create_new_tempvar();
 	int get_var_index(string name);
 	// Type get_var_type(string name);
+
+	string getNameFunction() { return nameFunction; }
 
 	// basic block management
 	string new_BB_name();
