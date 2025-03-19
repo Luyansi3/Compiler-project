@@ -24,10 +24,27 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
     return 0;
 }
 
+
+
+antlrcpp::Any Linearize::visitPar(ifccParser::ParContext *ctx){
+    
+    this->visit(ctx->expr());
+
+    if(ctx->opU()->MINUS()){
+        cfg->current_bb->add_IRInstr(new IRInstrNeg(cfg->current_bb, "!reg"));
+    }
+
+    return 0;
+}
+
 antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx){
 
     string varName = ctx->VAR()->getText();
+    
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+    if(ctx->opU()->MINUS()){
+        cfg->current_bb->add_IRInstr(new IRInstrNeg(cfg->current_bb, "!reg"));
+    }
 
     return 0;
 }
@@ -35,6 +52,9 @@ antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx){
 antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx){
 
     int retval = stoi(ctx->CONST()->getText());
+    if(ctx->opU()->MINUS()){
+        retval = -retval;
+    }
     cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", retval));
     
     return 0;

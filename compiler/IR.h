@@ -82,6 +82,15 @@ public:
 	virtual void gen_asm(ostream &o) override;
 };
 
+class IRInstrNeg : public IRInstr
+{
+private:
+	string dest;
+public:
+	IRInstrNeg(BasicBlock* bb, string dest): IRInstr(bb), dest(dest) {};
+	virtual void gen_asm(ostream &o) override;
+};
+
 class IRInstrPrologue : public IRInstr
 {
 public:

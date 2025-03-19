@@ -14,6 +14,13 @@ void IRInstrCopy::gen_asm(ostream &o){
     o << "    movl " << s << ", " << d << endl;
 }
 
+
+void IRInstrNeg::gen_asm(ostream &o){
+
+    string d = bb->cfg->IR_reg_to_asm(dest);
+    o << "    negl " << d << endl;
+}
+
 void IRInstrPrologue::gen_asm(ostream &o){
     o<< "    pushq %rbp \n";
     o<< "    movq %rsp, %rbp\n";
