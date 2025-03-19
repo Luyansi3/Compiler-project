@@ -105,6 +105,25 @@ public:
 	virtual void gen_asm(ostream &o) override;
 };
 
+class IRInstrMul : public IRInstr
+{
+public:
+	IRInstrMul(BasicBlock* bb, string src1, string src2): IRInstr(bb), src1(src1), src2(src2){}
+	virtual void gen_asm(ostream &o) override;
+private:
+	string src1;
+	string src2;
+};
+
+class IRInstrDiv : public IRInstr
+{
+public:
+	IRInstrDiv(BasicBlock* bb, string src1): IRInstr(bb), src1(src1){}
+	virtual void gen_asm(ostream &o) override;
+private:
+	string src1;
+};
+
 
 
 
@@ -172,7 +191,7 @@ class BasicBlock {
 class CFG {
  public:
 	CFG(/*DefFonction* ast*/unordered_map<string, Flag>& symbolIndex, string nameFunction):symbolIndex(symbolIndex), 
-	nextBBnumber(0), nameFunction(nameFunction)
+	nextBBnumber(0), nameFunction(nameFunction), nextFreeSymbolIndex(symbolIndex.size()*-4)
 	{
 		BasicBlock* bb_prologue = new BasicBlock(this, nameFunction);
 		bb_prologue->add_IRInstr(new IRInstrPrologue(bb_prologue));
@@ -189,8 +208,6 @@ class CFG {
 		bb_epilogue->add_IRInstr(new IRInstrEpilogue(bb_epilogue));
 		add_bb(bb_epilogue);
 		bb_body->exit_true = bb_epilogue;
-
-
 	}
 
 	// DefFonction* ast; /**< The AST this CFG comes from */
@@ -205,7 +222,7 @@ class CFG {
 
 	// symbol table methods
 	// void add_to_symbol_table(string name, Type t);
-	// string create_new_tempvar(Type t);
+	string create_new_tempvar(/* Type t */);
 	int get_var_index(string name);
 	// Type get_var_type(string name);
 

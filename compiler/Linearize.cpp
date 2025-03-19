@@ -61,14 +61,34 @@ antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx){
 }
 
 
-
-
 antlrcpp::Any Linearize::visitLvalue(ifccParser::LvalueContext *ctx){
 
     if(ctx->VAR()){
         string varName = ctx->VAR()->getText();
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+        //cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+    }
+    return 0;   
+}
+
+antlrcpp::Any Linearize::visitMulDiv(ifccParser::MulDivContext *ctx){
+
+    auto expr1 = ctx->expr(0);
+    auto expr2 = ctx->expr(1);
+
+    if(ctx->opM()->MULT()){
+        this->visit(expr1);
+        string tmp = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+        this->visit(expr2);
+        cfg->current_bb->add_IRInstr(new IRInstrMul(cfg->current_bb, tmp, "!reg"));
+    }
+    else{
+        this->visit(expr2);
+        string tmp = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+        this->visit(expr1);
+        cfg->current_bb->add_IRInstr(new IRInstrDiv(cfg->current_bb, tmp));
     }
     return 0;   
 }

@@ -1,8 +1,8 @@
 #include <inttypes.h>
 
 int main() {
-    int a = 9, b = 3;
-    int result = a / b * 5;
+    int a = 10, b = 3;
+    int result = a * 5 / b;
     
     return result;
 }

@@ -31,6 +31,20 @@ void IRInstrEpilogue::gen_asm(ostream &o){
     o << "    ret\n";
 }
 
+void IRInstrMul::gen_asm(ostream &o){
+    string var1 = bb->cfg->IR_reg_to_asm(src1);
+    string var2 = bb->cfg->IR_reg_to_asm(src2);
+
+    o << "    imull " << var1 << ", " << var2 << "\n";
+}
+
+void IRInstrDiv::gen_asm(ostream &o){
+    string var1 = bb->cfg->IR_reg_to_asm(src1);
+
+    o << "    cltd\n";
+    o << "    idivl " << var1 << "\n";
+}
+
 
 
 void BasicBlock::gen_asm(ostream& o){
@@ -85,4 +99,11 @@ void CFG::gen_asm_prologue(ostream &o){
 void CFG::gen_asm_epilogue(ostream &o){
     o<< "    popq %rbp\n";
     o << "    ret\n";
+}
+
+string CFG::create_new_tempvar() {
+    nextFreeSymbolIndex -= 4;
+    string tmpVar = "!tmp" + to_string(abs(nextFreeSymbolIndex));
+    symbolIndex.insert({tmpVar, {nextFreeSymbolIndex, false, false}});
+    return tmpVar;
 }
