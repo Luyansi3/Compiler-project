@@ -27,7 +27,7 @@ return_stmt: RETURN expr ;
 lvalue: VAR ;
 
 expr: expr opM expr     #MulDiv
-    | expr opA expr     #AddSous
+    | expr opA expr     #AddSub
     | opU OPENPAR expr CLOSEPAR  #Par
     | opU VAR           #ExprVar
     | opU CONST         #ExprConst 
