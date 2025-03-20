@@ -1,18 +1,21 @@
 #include "Linearize.h"
 
+// Visit the program
 antlrcpp::Any Linearize::visitProg(ifccParser::ProgContext *ctx)
 {
-
+    // Visit the block of the program
     this->visit(ctx->block());
 
     return 0;
 }
 
+// Visit a return statement
 antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 {
-
+    // Visit the expression in the return statement
     this->visit(ctx->expr());
 
+    // Create a new basic block for the epilogue
     BasicBlock *bb_epilogue = new BasicBlock(cfg, cfg->getNameFunction() + "_epilogue");
     bb_epilogue->add_IRInstr(new IRInstrEpilogue(bb_epilogue));
     cfg->add_bb(bb_epilogue);
@@ -20,20 +23,23 @@ antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
     return 0;
 }
 
+// Visit an assignment
 antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
 {
+    // Visit the expression and the left-hand side of the assignment
     this->visit(ctx->expr());
     this->visit(ctx->lvalue());
 
     return 0;
 }
 
-
-
-antlrcpp::Any Linearize::visitPar(ifccParser::ParContext *ctx){
-    
+// Visit a parenthesized expression
+antlrcpp::Any Linearize::visitPar(ifccParser::ParContext *ctx)
+{
+    // Visit the expression inside the parentheses
     this->visit(ctx->expr());
 
+    // If the expression has a unary minus operator, add a negation instruction
     if(ctx->opU()->MINUS()){
         cfg->current_bb->add_IRInstr(new IRInstrNeg(cfg->current_bb, "!reg"));
     }
@@ -41,11 +47,14 @@ antlrcpp::Any Linearize::visitPar(ifccParser::ParContext *ctx){
     return 0;
 }
 
-antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx){
-
+// Visit a variable expression
+antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx)
+{
     string varName = ctx->VAR()->getText();
     
+    // Add a copy instruction to load the variable into a register
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+    // If the expression has a unary minus operator, add a negation instruction
     if(ctx->opU()->MINUS()){
         cfg->current_bb->add_IRInstr(new IRInstrNeg(cfg->current_bb, "!reg"));
     }
@@ -53,75 +62,92 @@ antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx){
     return 0;
 }
 
+// Visit a constant expression
 antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx)
 {
-
     int retval = stoi(ctx->CONST()->getText());
+    // If the expression has a unary minus operator, negate the value
     if(ctx->opU()->MINUS()){
         retval = -retval;
     }
+    // Add a load constant instruction
     cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", retval));
 
     return 0;
 }
 
+// Visit a left-hand side value
 antlrcpp::Any Linearize::visitLvalue(ifccParser::LvalueContext *ctx)
 {
-
     if (ctx->VAR())
     {
         string varName = ctx->VAR()->getText();
+        // Add a copy instruction to store the register value into the variable
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
-        //cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
     }
     return 0;   
 }
 
-antlrcpp::Any Linearize::visitMulDiv(ifccParser::MulDivContext *ctx){
-
+// Visit a multiplication or division expression
+antlrcpp::Any Linearize::visitMulDiv(ifccParser::MulDivContext *ctx)
+{
     auto expr1 = ctx->expr(0);
     auto expr2 = ctx->expr(1);
 
     if(ctx->opM()->MULT()){
+        // Visit the first expression
         this->visit(expr1);
         string tmp = cfg->create_new_tempvar();
+        // Add a copy instruction to store the result in a temporary variable
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+        // Visit the second expression
         this->visit(expr2);
+        // Add a multiplication instruction
         cfg->current_bb->add_IRInstr(new IRInstrMul(cfg->current_bb, tmp, "!reg"));
     }
     else{
+        // Visit the second expression
         this->visit(expr2);
         string tmp = cfg->create_new_tempvar();
+        // Add a copy instruction to store the result in a temporary variable
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+        // Visit the first expression
         this->visit(expr1);
+        // Add a division instruction
         cfg->current_bb->add_IRInstr(new IRInstrDiv(cfg->current_bb, tmp));
     }
     return 0;
 }
 
+// Visit an addition or subtraction expression
 antlrcpp::Any Linearize::visitAddSub(ifccParser::AddSubContext *ctx)
 {
-    // auto expr1=ctx->expr()[0];
-    // auto expr2=ctx->expr()[1];
     if (ctx->opA()->PLUS())
     {
-        this->visit(ctx->expr()[0]); // Évaluer la première expression
+        // Visit the first expression
+        this->visit(ctx->expr()[0]);
         string tmp1 = cfg->create_new_tempvar();
+        // Add a copy instruction to store the result in a temporary variable
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
 
-        this->visit(ctx->expr()[1]); // Évaluer la deuxième expression
-        string tmp2 = cfg->create_new_tempvar();
+        // Visit the second expression
+        this->visit(ctx->expr()[1]);
 
+        // Add an addition instruction
         cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, tmp1, "!reg"));
     }
     else if (ctx->opA()->MINUS())
     {
-        this->visit(ctx->expr()[1]); // Évaluer la première expression
+        // Visit the second expression
+        this->visit(ctx->expr()[1]);
         string tmp1 = cfg->create_new_tempvar();
+        // Add a copy instruction to store the result in a temporary variable
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
 
-        this->visit(ctx->expr()[0]); // Évaluer la deuxième expression
+        // Visit the first expression
+        this->visit(ctx->expr()[0]);
 
+        // Add a subtraction instruction
         cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, tmp1, "!reg"));
     }
     return 0;
