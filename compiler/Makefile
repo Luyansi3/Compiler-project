@@ -18,9 +18,9 @@ OBJECTS=build/ifccBaseVisitor.o \
 	build/ifccVisitor.o \
 	build/ifccParser.o \
 	build/main.o \
-	build/SymbolTableVisitor.o \
+	build/IR.o \
 	build/Linearize.o \
-	build/IR.o
+	build/SymbolTableVisitor.o
 
 ifcc: $(OBJECTS)
 	@mkdir -p build
@@ -49,7 +49,7 @@ generated/ifccVisitor.cpp: generated/ifccParser.cpp
 generated/ifccBaseVisitor.cpp: generated/ifccParser.cpp
 generated/ifccParser.cpp: ifcc.g4
 	@mkdir -p generated
-	$(ANTLR) -visitor -no-listener -Dlanguage=Cpp -o generated ifcc.g4
+	java -jar $(ANTLRJAR) -visitor -no-listener -Dlanguage=Cpp -o generated ifcc.g4
 
 # prevent automatic cleanup of "intermediate" files like ifccLexer.cpp etc
 .PRECIOUS: generated/ifcc%.cpp   
@@ -62,7 +62,7 @@ FILE ?= ../tests/testfiles/1_return42.c
 
 gui:
 	@mkdir -p generated build
-	$(ANTLR) -Dlanguage=Java -o generated ifcc.g4
+	java -jar $(ANTLRJAR) -Dlanguage=Java -o generated ifcc.g4
 	javac -cp $(ANTLRJAR) -d build generated/*.java
 	java -cp $(ANTLRJAR):build org.antlr.v4.gui.TestRig ifcc axiom -gui $(FILE)
 

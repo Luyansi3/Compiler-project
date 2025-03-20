@@ -65,7 +65,12 @@ antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx)
 // Visit a constant expression
 antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx)
 {
-    int retval = stoi(ctx->CONST()->getText());
+    int retval;
+    if (ctx->constante()->CONSTINT())
+        retval = stoi(ctx->constante()->CONSTINT()->getText());
+    else
+        retval = (int) ctx->constante()->CONSTCHAR()->getText()[1];
+
     // If the expression has a unary minus operator, negate the value
     if(ctx->opU()->MINUS()){
         retval = -retval;
@@ -150,5 +155,54 @@ antlrcpp::Any Linearize::visitAddSub(ifccParser::AddSubContext *ctx)
         // Add a subtraction instruction
         cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, tmp1, "!reg"));
     }
+    return 0;
+}
+
+
+
+
+antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
+    //Obtentino du label de la fonction
+    string label = ctx->funcname()->getText();
+    vector<string> params;
+
+
+
+    //Mettre le contexte  celui du param
+    ifccParser::ParamsContext* ctxParam = ctx->params();
+
+    //Evaluer le premier
+    if (ctxParam->expr()) {
+        ifccParser::ExprContext* expression = ctxParam->expr();
+        string tmp = cfg->create_new_tempvar();
+        this->visit(expression);
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+        params.push_back(tmp);
+        
+        
+        ifccParser::Liste_paramContext *liste = ctxParam->liste_param();
+
+        //Parcours de la liste de paramètres et évaluer chacun des expressions.
+        while (liste != nullptr && liste->expr() != nullptr) {
+            tmp = cfg->create_new_tempvar();
+            expression = liste->expr();
+            this->visit(expression);
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+            params.push_back(tmp);
+            liste = liste->liste_param();
+        }
+
+        cfg->current_bb->add_IRInstr(new IrInstrCall(cfg->current_bb, label, params));
+    }
+    
+
+
+    return 0;
+}
+
+
+antlrcpp::Any Linearize::visitExprCall(ifccParser::ExprCallContext *ctx) {
+    this->visit(ctx->call());
+
     return 0;
 }
