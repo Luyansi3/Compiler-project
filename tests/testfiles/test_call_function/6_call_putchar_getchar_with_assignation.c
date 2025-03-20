@@ -5,7 +5,7 @@ int main() {
     int b = '2';
 
     int c = putchar(a-'5'*12);
-    c = getchar();
+    
 
 
     return 0;

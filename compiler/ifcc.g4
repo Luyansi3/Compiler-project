@@ -2,7 +2,7 @@ grammar ifcc;
 
 axiom : prog EOF ;
 
-prog : type MAIN OPENPAR CLOSEPAR block ;
+prog : INT MAIN OPENPAR CLOSEPAR block ;
 block: OPENCROCHET instruction CLOSECROCHET ;
 
 instruction: return_stmt  SEMI  instruction 
@@ -44,14 +44,15 @@ liste_param: COMMA expr liste_param
 call: funcname OPENPAR params CLOSEPAR ;
 
 
-funcname: PUTCHAR | GETCHAR ;
+funcname: VAR | PUTCHAR | GETCHAR ;
 
 opU: MINUS | ;
 
 opA: PLUS | MINUS ;
 opM: DIV | MULT ;
 
-type: INT;
+type: INT
+    | CHAR  ;
 
 constante: CONSTINT
          | CONSTCHAR ; 
@@ -60,6 +61,7 @@ constante: CONSTINT
 PUTCHAR: 'putchar' ;
 GETCHAR: 'getchar' ;
 INT: 'int' ;
+CHAR: 'char' ;
 RETURN : 'return' ;
 MAIN: 'main';
 VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
