@@ -5,13 +5,20 @@ using namespace std;
 #include "generated/ifccBaseVisitor.h"
 #include "IR.h"
 
+// Class to linearize the parse tree into intermediate representation (IR)
 class Linearize : public ifccBaseVisitor
 {
 private:
-    CFG* cfg;
+    CFG* cfg; // Control Flow Graph (CFG) pointer
+
 public:
+    // Constructor to initialize the CFG pointer
     Linearize(CFG* cfg): cfg(cfg) {}
+
+    // Destructor
     ~Linearize() { }
+
+    // Override methods to visit different parts of the parse tree
     virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override;
     virtual antlrcpp::Any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
     virtual antlrcpp::Any visitAffectation(ifccParser::AffectationContext *ctx) override;
