@@ -33,7 +33,7 @@ expr: expr opM expr     #MulDiv
     | opU VAR           #ExprVar
     | opU constante         #ExprConst 
     | affectation       #ExprAffectation 
-    | call              #ExprCall   ;
+    | opU call              #ExprCall   ;
 
 params: expr liste_param 
        |  ;
