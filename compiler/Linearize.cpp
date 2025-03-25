@@ -176,3 +176,35 @@ antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
     return 0;
 }
 
+antlrcpp::Any Linearize::visitExprComp(ifccParser::ExprCompContext *ctx)
+{
+    ifccParser::CompContext *ctxComp = ctx->comp();
+    ifccParser::ExprContext *ctxExpr1 = ctx->expr(0);
+    ifccParser::ExprContext *ctxExpr2 = ctx->expr(1);
+
+    // Visit the second expression
+    this->visit(ctxExpr2);
+    string tmp1 = cfg->create_new_tempvar();
+    // Add a copy instruction to store the result in a temporary variable
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+    // Visit the first expression
+    this->visit(ctxExpr1);
+
+    if (ctxComp->EQ()) {
+        // Add a comparison instruction
+        cfg->current_bb->add_IRInstr(new IRInstrCmpEQ(cfg->current_bb, tmp1, "!reg"));
+    }
+    else if (ctxComp->NEQ()) {
+        // Add a comparison instruction
+        cfg->current_bb->add_IRInstr(new IRInstrCmpNEQ(cfg->current_bb, tmp1, "!reg"));
+    }
+    else if (ctxComp->INF()) {
+        // Add a comparison instruction
+        cfg->current_bb->add_IRInstr(new IRInstrCmpINF(cfg->current_bb, tmp1, "!reg"));
+    }
+    else if (ctxComp->SUP()) {
+        // Add a comparison instruction
+        cfg->current_bb->add_IRInstr(new IRInstrCmpSUP(cfg->current_bb, tmp1, "!reg"));
+    }
+    return 0;
+}

@@ -181,6 +181,47 @@ Possible optimization:
 	   followed by a conditional jump to the exit_false branch
 */
 
+class IRInstrCmpEQ : public IRInstr
+{
+private:
+    string src1;
+    string src2;
+public:
+    IRInstrCmpEQ(BasicBlock *bb, string src1, string src2) : IRInstr(bb), src1(src1), src2(src2) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrCmpNEQ : public IRInstr
+{
+private:
+    string src1;
+    string src2;
+public:
+    IRInstrCmpNEQ(BasicBlock *bb, string src1, string src2) : IRInstr(bb), src1(src1), src2(src2) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrCmpINF : public IRInstr
+{
+private:
+    string src1;
+    string src2;
+public:
+    IRInstrCmpINF(BasicBlock *bb, string src1, string src2) : IRInstr(bb), src1(src1), src2(src2) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrCmpSUP : public IRInstr
+{
+private:
+    string src1;
+    string src2;
+public:
+    IRInstrCmpSUP(BasicBlock *bb, string src1, string src2) : IRInstr(bb), src1(src1), src2(src2) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+/** The class for a basic block */
 class BasicBlock
 {
 public:

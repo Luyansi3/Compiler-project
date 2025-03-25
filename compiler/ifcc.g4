@@ -29,6 +29,7 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | opU expr              #ExprUnary
     | expr opM expr         #MulDiv
     | expr opA expr         #AddSub
+    | expr comp expr    #ExprComp
     | VAR                   #ExprVar
     | constante             #ExprConst 
     | affectation           #ExprAffectation 
@@ -41,6 +42,8 @@ liste_param: expr (COMMA expr)*
 call: VAR OPENPAR liste_param CLOSEPAR ;
 
 
+
+comp: EQ | NEQ | INF | SUP ;
 
 opU: MINUS ;
 
@@ -59,6 +62,10 @@ MAIN: 'main';
 VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
 CONSTINT : [0-9]+ ;
 CONSTCHAR : '\''[a-zA-Z0-9]'\'' ;
+EQ: '==';
+NEQ: '!=';
+INF: '<';
+SUP: '>';
 OPENPAR       : '(';
 CLOSEPAR      : ')';
 OPENCROCHET   : '{';

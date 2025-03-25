@@ -83,6 +83,41 @@ void IrInstrCall::gen_asm(ostream &o) {
     o << "    call" << " " << label << "\n";
 }
 
+// Generate assembly code for comparison
+void IRInstrCmpEQ::gen_asm(ostream &o){
+    string source1 = this->bb->cfg->IR_reg_to_asm(src1);
+    string source2 = this->bb->cfg->IR_reg_to_asm(src2);
+    o << "    cmpl " << source1 << ", " << source2 << "\n";
+    o << "    sete %al\n";
+    o << "    movzbl %al, %eax\n";
+}
+
+// Generate assembly code for non equal comparison
+void IRInstrCmpNEQ::gen_asm(ostream &o){
+    string source1 = this->bb->cfg->IR_reg_to_asm(src1);
+    string source2 = this->bb->cfg->IR_reg_to_asm(src2);
+    o << "    cmpl " << source1 << ", " << source2 << "\n";
+    o << "    setne %al\n";
+    o << "    movzbl %al, %eax\n";
+}
+
+// Generate assembly code for less than comparison
+void IRInstrCmpINF::gen_asm(ostream &o){
+    string source1 = this->bb->cfg->IR_reg_to_asm(src1);
+    string source2 = this->bb->cfg->IR_reg_to_asm(src2);
+    o << "    cmpl " << source1 << ", " << source2 << "\n";
+    o << "    setl %al\n";
+    o << "    movzbl %al, %eax\n";
+}
+
+// Generate assembly code for greater than comparison
+void IRInstrCmpSUP::gen_asm(ostream &o){
+    string source1 = this->bb->cfg->IR_reg_to_asm(src1);
+    string source2 = this->bb->cfg->IR_reg_to_asm(src2);
+    o << "    cmpl " << source1 << ", " << source2 << "\n";
+    o << "    setg %al\n";
+    o << "    movzbl %al, %eax\n";
+}
 
 // Generate assembly code for a basic block and its instructions
 void BasicBlock::gen_asm(ostream& o){

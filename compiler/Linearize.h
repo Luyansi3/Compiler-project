@@ -29,5 +29,6 @@ public:
     virtual antlrcpp::Any visitAddSub(ifccParser::AddSubContext *ctx) override;
     virtual antlrcpp::Any visitCall(ifccParser::CallContext *ctx) override;
     virtual antlrcpp::Any visitExprUnary(ifccParser::ExprUnaryContext *ctx) override;
+    virtual antlrcpp::Any visitExprComp(ifccParser::ExprCompContext *ctx) override;
 };
 
