@@ -65,7 +65,7 @@ int main(int argn, const char **argv)
   
   // Check for unused variables
   for (auto it=table.symbolTable.begin(); it != table.symbolTable.end(); ++it){
-    if (!it->second.used)
+    if (!it->second.used && it->second.nombreParams == -1)
     {
         cerr << "Var " << it->first << " n'est pas utilisé" <<endl;
     }

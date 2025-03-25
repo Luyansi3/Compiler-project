@@ -65,7 +65,12 @@ antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx)
 // Visit a constant expression
 antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx)
 {
-    int retval = stoi(ctx->CONST()->getText());
+    int retval;
+    if (ctx->constante()->CONSTINT())
+        retval = stoi(ctx->constante()->CONSTINT()->getText());
+    else
+        retval = (int) ctx->constante()->CONSTCHAR()->getText()[1];
+
     // If the expression has a unary minus operator, negate the value
     if(ctx->opU()->MINUS()){
         retval = -retval;
@@ -152,3 +157,31 @@ antlrcpp::Any Linearize::visitAddSub(ifccParser::AddSubContext *ctx)
     }
     return 0;
 }
+
+
+
+
+antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
+    //Obtentino du label de la fonction
+    string label = ctx->VAR()->getText();
+    vector<string> params;
+
+    for (auto expression : ctx->liste_param()->expr()) {
+        string tmp = cfg->create_new_tempvar();
+        this->visit(expression);
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+        params.push_back(tmp);
+    }
+
+
+
+    
+
+    cfg->current_bb->add_IRInstr(new IrInstrCall(cfg->current_bb, label, params));
+    
+    
+
+
+    return 0;
+}
+

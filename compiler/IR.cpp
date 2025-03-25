@@ -3,20 +3,20 @@
 // Generate assembly code for loading a constant
 void IRInstrLDConst::gen_asm(ostream &o){
     string d = bb->cfg->IR_reg_to_asm(dest);
-    o << "    movl $" << val << ", " << d << endl;
+    o << "    movl $" << val << ", " << d <<"\n";
 }
 
 // Generate assembly code for copying a value
 void IRInstrCopy::gen_asm(ostream &o){
     string d = bb->cfg->IR_reg_to_asm(dest);
     string s = bb->cfg->IR_reg_to_asm(src);
-    o << "    movl " << s << ", " << d << endl;
+    o << "    movl " << s << ", " << d <<"\n";
 }
 
 // Generate assembly code for negating a value
 void IRInstrNeg::gen_asm(ostream &o){
     string d = bb->cfg->IR_reg_to_asm(dest);
-    o << "    negl " << d << endl;
+    o << "    negl " << d <<"\n";
 }
 
 // Generate assembly code for the function prologue
@@ -59,9 +59,34 @@ void IRInstrSub::gen_asm(ostream &o){
     o << "   subl " << source1 << ", " << source2 << "\n";
 }
 
+void IrInstrCall::gen_asm(ostream &o) {
+    for (int i = 0; i<6 && i<params.size(); i++) {
+        string param = this->bb->cfg->IR_reg_to_asm(params[i]);
+        if (i==0)
+            o << "    movl" << " " << param << ", " << "%edi" <<"\n";
+        else if (i==1)
+            o << "    movl" << " " << param << ", " << "%esi" <<"\n";
+        else if (i==2)
+            o << "    movl" << " " << param << ", " << "%edx" <<"\n";
+        else if (i==3)
+            o << "    movl" << " " << param << ", " << "%ecx" <<"\n";
+        else if (i==4)
+            o << "    movl" << " " << param << ", " << "%r8d" <<"\n";
+        else if (i==5)
+            o << "    movl" << " " << param << ", " << "%r9d" <<"\n";
+    }
+
+    for (int i = params.size() - 1; i>5; i++) {
+        string param = this->bb->cfg->IR_reg_to_asm(params[i]);
+        o << "    pushq" << " " << param << "\n";
+    }
+    o << "    call" << " " << label << "\n";
+}
+
+
 // Generate assembly code for a basic block and its instructions
 void BasicBlock::gen_asm(ostream& o){
-    o << " " << label << ":" << endl; 
+    o << " " << label << ":" <<"\n"; 
     for(auto &instr : instrs){
         instr->gen_asm(o);
     }

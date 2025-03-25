@@ -9,10 +9,11 @@ using namespace std;
 // Structure to hold information about a variable
 typedef struct Flag
 {
-    int index;     // Index of the variable in the symbol table
-    bool used;     // Flag to indicate if the variable is used
-    bool affected; // Flag to indicate if the variable is assigned a value
-} Flag;
+    int index;
+    bool used;
+    bool affected;
+    int nombreParams;
+}Flag;
 
 // Class to visit and build the symbol table
 class SymbolTableVisitor : public ifccBaseVisitor {
@@ -26,7 +27,8 @@ class SymbolTableVisitor : public ifccBaseVisitor {
         virtual antlrcpp::Any visitDecl_element(ifccParser::Decl_elementContext *ctx) override;
         virtual antlrcpp::Any visitAffectation(ifccParser::AffectationContext *ctx) override;
         virtual antlrcpp::Any visitExprVar(ifccParser::ExprVarContext *ctx) override;
-
+        virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override;
+        virtual antlrcpp::Any visitCall(ifccParser::CallContext * ctx) override;
     private:
         int index; // Index to keep track of variable positions
 };
