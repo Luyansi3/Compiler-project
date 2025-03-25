@@ -36,8 +36,7 @@ expr: expr opM expr     #MulDiv
     | opU call              #ExprCall   ;
 
 
-liste_param: (expr COMMA)*
-            | expr
+liste_param: expr (COMMA expr)*
             | ;
 
 call: VAR OPENPAR liste_param CLOSEPAR ;
@@ -49,15 +48,13 @@ opU: MINUS | ;
 opA: PLUS | MINUS ;
 opM: DIV | MULT ;
 
-type: INT
-    | CHAR  ;
+type: INT ;
 
 constante: CONSTINT
          | CONSTCHAR ; 
 
 
 INT: 'int' ;
-CHAR: 'char' ;
 RETURN : 'return' ;
 MAIN: 'main';
 VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
