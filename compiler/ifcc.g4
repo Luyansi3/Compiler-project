@@ -2,8 +2,8 @@ grammar ifcc;
 
 axiom : prog EOF ;
 
-prog : INT MAIN OPENPAR CLOSEPAR block ;
-block: OPENCROCHET instructions CLOSECROCHET ;
+prog : decl_fonction* INT MAIN OPENPAR CLOSEPAR block decl_fonction*;
+block: OPENCROCHET instruction CLOSECROCHET ;
 
 instructions: (instruction)* ;
 
@@ -14,6 +14,10 @@ instruction: return_stmt  SEMI
             | if_stmt
             | while_stmt
             ;
+
+decl_fonction: type VAR OPENPAR  CLOSEPAR block ;
+
+decl_sans_assignation: type VAR (COMMA type VAR)* ;
 
 declaration: type decl_element (COMMA decl_element)* ;
 
