@@ -90,16 +90,11 @@ antlrcpp::Any SymbolTableVisitor::visitExprVar(ifccParser::ExprVarContext *ctx){
     return 0;
 }
 
-antlrcpp::Any SymbolTableVisitor::visitExprCall(ifccParser::ExprCallContext *ctx) {
-    this->visit(ctx->call());
 
-
-    return 0;
-}
 
 
 antlrcpp::Any SymbolTableVisitor::visitCall(ifccParser::CallContext* ctx) {
-    string funcname = ctx->funcname()->getText();
+    string funcname = ctx->VAR()->getText();
 
     if (symbolTable.find(funcname) == symbolTable.end()) {
         cerr << "The fonction " << funcname << " is never declared" << endl;
@@ -109,27 +104,12 @@ antlrcpp::Any SymbolTableVisitor::visitCall(ifccParser::CallContext* ctx) {
     }
 
     int expectedNombreParams = symbolTable[funcname].nombreParams;
-    int actualNombreParams = 0;
+    int actualNombreParams = ctx->liste_param()->expr().size();
 
-    //Mettre le contexte  celui du param
-    ifccParser::ParamsContext* ctxParam = ctx->params();
-
-    if (ctxParam->expr()) {
-        actualNombreParams++;
-        ifccParser::ExprContext* expression = ctxParam->expr();
+    for (auto expression : ctx->liste_param()->expr()) {
         this->visit(expression);
-        
-        
-        ifccParser::Liste_paramContext *liste = ctxParam->liste_param();
-
-        //Parcours de la liste de paramètres et évaluer chacun des expressions.
-        while (liste != nullptr && liste->expr() != nullptr) {
-            actualNombreParams++;
-            expression = liste->expr();
-            this->visit(expression);
-            liste = liste->liste_param();
-        }
     }
+
 
     if (actualNombreParams != expectedNombreParams) {
         cerr << "La fonction " << funcname << " n'a pas le bon nombre de paramètres" << endl;

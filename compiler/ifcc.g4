@@ -35,16 +35,14 @@ expr: expr opM expr     #MulDiv
     | affectation       #ExprAffectation 
     | opU call              #ExprCall   ;
 
-params: expr liste_param 
-       |  ;
 
-liste_param: COMMA expr liste_param 
-             | ; 
+liste_param: (expr COMMA)*
+            | expr
+            | ;
 
-call: funcname OPENPAR params CLOSEPAR ;
+call: VAR OPENPAR liste_param CLOSEPAR ;
 
 
-funcname: VAR | PUTCHAR | GETCHAR ;
 
 opU: MINUS | ;
 
@@ -58,8 +56,6 @@ constante: CONSTINT
          | CONSTCHAR ; 
 
 
-PUTCHAR: 'putchar' ;
-GETCHAR: 'getchar' ;
 INT: 'int' ;
 CHAR: 'char' ;
 RETURN : 'return' ;

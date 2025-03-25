@@ -163,46 +163,25 @@ antlrcpp::Any Linearize::visitAddSub(ifccParser::AddSubContext *ctx)
 
 antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
     //Obtentino du label de la fonction
-    string label = ctx->funcname()->getText();
+    string label = ctx->VAR()->getText();
     vector<string> params;
 
-
-
-    //Mettre le contexte  celui du param
-    ifccParser::ParamsContext* ctxParam = ctx->params();
-
-    //Evaluer le premier
-    if (ctxParam->expr()) {
-        ifccParser::ExprContext* expression = ctxParam->expr();
+    for (auto expression : ctx->liste_param()->expr()) {
         string tmp = cfg->create_new_tempvar();
         this->visit(expression);
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
         params.push_back(tmp);
-        
-        
-        ifccParser::Liste_paramContext *liste = ctxParam->liste_param();
-
-        //Parcours de la liste de paramètres et évaluer chacun des expressions.
-        while (liste != nullptr && liste->expr() != nullptr) {
-            tmp = cfg->create_new_tempvar();
-            expression = liste->expr();
-            this->visit(expression);
-            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
-            params.push_back(tmp);
-            liste = liste->liste_param();
-        }
-
-        cfg->current_bb->add_IRInstr(new IrInstrCall(cfg->current_bb, label, params));
     }
+
+
+
+    
+
+    cfg->current_bb->add_IRInstr(new IrInstrCall(cfg->current_bb, label, params));
+    
     
 
 
     return 0;
 }
 
-
-antlrcpp::Any Linearize::visitExprCall(ifccParser::ExprCallContext *ctx) {
-    this->visit(ctx->call());
-
-    return 0;
-}

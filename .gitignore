@@ -40,4 +40,4 @@ ifcc-test-output
 config.mk
 ifcc
 install-antlr.sh
-Makefile
+**/Makefile
