@@ -11,6 +11,7 @@ instruction: return_stmt  SEMI
             | declaration  SEMI 
             | expr  SEMI
             | call SEMI
+            | if_stmt
             ;
 
 declaration: type decl_element (COMMA decl_element)* ;
@@ -18,6 +19,7 @@ declaration: type decl_element (COMMA decl_element)* ;
 decl_element: VAR
             | affectation ;
 
+if_stmt: IF OPENPAR expr CLOSEPAR block (ELSE block)? ;
 
 affectation: lvalue EQUAL expr ;
 
@@ -59,6 +61,8 @@ constante: CONSTINT
 INT: 'int' ;
 RETURN : 'return' ;
 MAIN: 'main';
+IF: 'if';
+ELSE: 'else';
 VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
 CONSTINT : [0-9]+ ;
 CONSTCHAR : '\''[a-zA-Z0-9]'\'' ;

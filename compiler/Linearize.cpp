@@ -15,11 +15,7 @@ antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
     // Visit the expression in the return statement
     this->visit(ctx->expr());
 
-    // Create a new basic block for the epilogue
-    BasicBlock *bb_epilogue = new BasicBlock(cfg, cfg->getNameFunction() + "_epilogue");
-    bb_epilogue->add_IRInstr(new IRInstrEpilogue(bb_epilogue));
-    cfg->add_bb(bb_epilogue);
-    cfg->current_bb->exit_true = bb_epilogue;
+    cfg->current_bb->exit_true = cfg->bb_epi;
     return 0;
 }
 
@@ -205,6 +201,55 @@ antlrcpp::Any Linearize::visitExprComp(ifccParser::ExprCompContext *ctx)
     else if (ctxComp->SUP()) {
         // Add a comparison instruction
         cfg->current_bb->add_IRInstr(new IRInstrCmpSUP(cfg->current_bb, tmp1, "!reg"));
+    }
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
+    // Visit the condition expression
+    this->visit(ctx->expr());
+    string tmp = cfg->create_new_tempvar();
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+    cfg->current_bb->test_var_name = tmp;
+    // Create a new basic block for the then part
+    BasicBlock *bb_then = new BasicBlock(cfg, cfg->current_bb->label + "_then");
+    cfg->add_bb(bb_then);
+
+    if (ctx->block().size() > 1) {
+        // Create a new basic block for the else part
+        BasicBlock *bb_else = new BasicBlock(cfg, cfg->current_bb->label + "_else");
+        cfg->add_bb(bb_else);
+        // Create a new basic block for the merge
+        BasicBlock *bb_endif = new BasicBlock(cfg, cfg->new_BB_name());
+        cfg->add_bb(bb_endif);
+        bb_endif->exit_true = cfg->current_bb->exit_true;
+        bb_then->exit_true = bb_endif;
+        bb_else->exit_true = bb_endif;
+        cfg->current_bb->exit_true = bb_then;
+        cfg->current_bb->exit_false = bb_else;
+        // Set the current basic block to the then part
+        cfg->current_bb = bb_then;
+        this->visit(ctx->block(0));
+        // Set the current basic block to the else part
+        cfg->current_bb = bb_else;
+        // Visit the else part
+        this->visit(ctx->block(1));
+        // Set the current basic block to the merge
+        cfg->current_bb = bb_endif;
+    } else {
+        // Create a new basic block for the merge
+        BasicBlock *bb_endif = new BasicBlock(cfg, cfg->new_BB_name());
+        cfg->add_bb(bb_endif);
+        bb_endif->exit_true = cfg->current_bb->exit_true;
+        bb_then->exit_true = bb_endif;
+        cfg->current_bb->exit_true = bb_then;
+        cfg->current_bb->exit_false = bb_endif;
+        // Set the current basic block to the then part
+        cfg->current_bb = bb_then;
+        // Visit the then part
+        this->visit(ctx->block(0));
+        // Set the current basic block to the endif
+        cfg->current_bb = bb_endif;
     }
     return 0;
 }
