@@ -55,9 +55,7 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementCont
             cerr<< "Variable " << var << " deja déclaré" << endl;
             exit(1);
         }
-    }
-    this->visit(ctx->liste_decl());
-    
+    } 
     
     return 0;
 }
