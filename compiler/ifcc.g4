@@ -3,22 +3,20 @@ grammar ifcc;
 axiom : prog EOF ;
 
 prog : INT MAIN OPENPAR CLOSEPAR block ;
-block: OPENCROCHET instruction CLOSECROCHET ;
+block: OPENCROCHET instructions CLOSECROCHET ;
 
-instruction: return_stmt  SEMI  instruction 
-            | declaration  SEMI  instruction 
-            | expr  SEMI instruction
-            | call SEMI instruction
-            | ;
+instructions: (instruction)* ;
 
-declaration: type decl_element ;
+instruction: return_stmt  SEMI
+            | declaration  SEMI 
+            | expr  SEMI
+            | call SEMI
+            ;
 
-decl_element: VAR liste_decl
-            | affectation liste_decl ;
+declaration: type decl_element (COMMA decl_element)* ;
 
-liste_decl: COMMA decl_element 
-            |  ;
-
+decl_element: VAR
+            | affectation ;
 
 
 affectation: lvalue EQUAL expr ;
@@ -27,13 +25,14 @@ return_stmt: RETURN expr ;
 
 lvalue: VAR ;
 
-expr: expr opM expr     #MulDiv
-    | expr opA expr     #AddSub
-    | opU OPENPAR expr CLOSEPAR  #Par
-    | opU VAR           #ExprVar
-    | opU constante         #ExprConst 
-    | affectation       #ExprAffectation 
-    | opU call              #ExprCall   ;
+expr: OPENPAR expr CLOSEPAR #ExprPar
+    | opU expr              #ExprUnary
+    | expr opM expr         #MulDiv
+    | expr opA expr         #AddSub
+    | VAR                   #ExprVar
+    | constante             #ExprConst 
+    | affectation           #ExprAffectation 
+    | call                  #ExprCall   ;
 
 
 liste_param: expr (COMMA expr)*
@@ -43,7 +42,7 @@ call: VAR OPENPAR liste_param CLOSEPAR ;
 
 
 
-opU: MINUS | ;
+opU: MINUS ;
 
 opA: PLUS | MINUS ;
 opM: DIV | MULT ;

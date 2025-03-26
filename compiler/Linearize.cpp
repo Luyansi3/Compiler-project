@@ -33,19 +33,7 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
     return 0;
 }
 
-// Visit a parenthesized expression
-antlrcpp::Any Linearize::visitPar(ifccParser::ParContext *ctx)
-{
-    // Visit the expression inside the parentheses
-    this->visit(ctx->expr());
 
-    // If the expression has a unary minus operator, add a negation instruction
-    if(ctx->opU()->MINUS()){
-        cfg->current_bb->add_IRInstr(new IRInstrNeg(cfg->current_bb, "!reg"));
-    }
-
-    return 0;
-}
 
 // Visit a variable expression
 antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx)
@@ -54,6 +42,13 @@ antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx)
     
     // Add a copy instruction to load the variable into a register
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitExprUnary(ifccParser::ExprUnaryContext *ctx)
+{
+    this->visit(ctx->expr());
     // If the expression has a unary minus operator, add a negation instruction
     if(ctx->opU()->MINUS()){
         cfg->current_bb->add_IRInstr(new IRInstrNeg(cfg->current_bb, "!reg"));
@@ -71,10 +66,6 @@ antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx)
     else
         retval = (int) ctx->constante()->CONSTCHAR()->getText()[1];
 
-    // If the expression has a unary minus operator, negate the value
-    if(ctx->opU()->MINUS()){
-        retval = -retval;
-    }
     // Add a load constant instruction
     cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", retval));
 
