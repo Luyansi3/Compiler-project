@@ -15,7 +15,7 @@ instruction: return_stmt  SEMI
             | while_stmt
             ;
 
-decl_fonction: type VAR OPENPAR  CLOSEPAR block ;
+decl_fonction: type VAR OPENPAR decl_sans_assignation CLOSEPAR block ;
 
 decl_sans_assignation: type VAR (COMMA type VAR)* ;
 

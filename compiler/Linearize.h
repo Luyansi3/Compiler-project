@@ -37,5 +37,6 @@ public:
     virtual antlrcpp::Any visitExprAnd(ifccParser::ExprAndContext *ctx) override;
     virtual antlrcpp::Any visitExprOr(ifccParser::ExprOrContext *ctx) override;
     virtual antlrcpp::Any visitWhile_stmt(ifccParser::While_stmtContext *ctx) override;
+    virtual antlrcpp::Any visitDecl_fonction(ifccParser::Decl_fonctionContext *ctx) override {return 0;};
 };
 

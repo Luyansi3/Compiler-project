@@ -8,9 +8,17 @@
 #include <unordered_map>
 #include <initializer_list>
 
+#include "antlr4-runtime.h"
+#include "generated/ifccParser.h"
+
+
+#include "Flag.h"
+
+class SymbolTableVisitor;
+
 using namespace std;
 
-#include "SymbolTableVisitor.h"
+
 
 // Forward declarations
 class BasicBlock;
@@ -243,7 +251,7 @@ public:
 class CFG
 {
 public:
-    CFG(unordered_map<string, Flag>& symbolIndex, string nameFunction);
+    CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4::tree::ParseTree* tree);
     ~CFG();
 
     void add_bb(BasicBlock *bb);
@@ -257,16 +265,21 @@ public:
     string create_new_tempvar();
     int get_var_index(string name);
 
+    antlr4::tree::ParseTree* getTree() {return tree;}
+
     string getNameFunction() { return nameFunction; }
+    vector<BasicBlock*> getBbs() {return bbs;}
+    unordered_map<string, FlagVar> &getSymbolIndex() {return symbolIndex;}
 
     string new_BB_name();
     BasicBlock *current_bb;
     BasicBlock *bb_epi;
 
 protected:
-    unordered_map<string, Flag> symbolIndex; /**< part of the symbol table */
+    unordered_map<string, FlagVar> symbolIndex; /**< part of the symbol table */
     int nextFreeSymbolIndex;                 /**< to allocate new symbols in the symbol table */
     int nextBBnumber;                        /**< just for naming */
     string nameFunction;
+    antlr4::tree::ParseTree* tree;
     vector<BasicBlock *> bbs;                /**< all the basic blocks of this CFG */
 };

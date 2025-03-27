@@ -1,20 +1,28 @@
 #include "SymbolTableVisitor.h"
 
-
+unordered_map<string, FlagFonction> SymbolTableVisitor::symbolTableFonction;
 
 antlrcpp::Any SymbolTableVisitor::visitProg(ifccParser::ProgContext *ctx) {
+
     
     
-    Flag flag;
+    
+    FlagFonction flag;
     flag.used = false;
-    flag.affected = true;
+    flag.declared = true;
     flag.nombreParams = 1;
-    symbolTable.insert({"putchar", flag});
+    symbolTableFonction.insert({"putchar", flag});
 
     flag.nombreParams = 0;
-    symbolTable.insert({"getchar", flag});
+    symbolTableFonction.insert({"getchar", flag});
 
     this->visit(ctx->block());
+
+    cfg_liste.emplace_back(symbolTableVar, "main", ctx->block());
+
+
+    for (auto decl_fonction : ctx->decl_fonction())
+        this->visit(decl_fonction);
 
     return 0;
 
@@ -24,12 +32,12 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementCont
 {
     if(ctx->affectation()){
         string var = ctx->affectation()->lvalue()->VAR()->getText();
-        if(symbolTable.find(var) == symbolTable.end()){
-            Flag flag;
-            flag.used = false;
-            flag.affected = false;
-            flag.index = index;
-            symbolTable.insert({var, flag});
+        if(symbolTableVar.find(var) == symbolTableVar.end()){
+            FlagVar flagVar;
+            flagVar.used = false;
+            flagVar.affected = false;
+            flagVar.index = index;
+            symbolTableVar.insert({var, flagVar});
             index -= 4;
         }
         else{
@@ -41,13 +49,12 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementCont
     }
     else{
         string var = ctx->VAR()->getText();
-        if(symbolTable.find(var) == symbolTable.end()){
-            Flag flag;
-            flag.used = false;
-            flag.affected = false;
-            flag.index = index;
-            flag.nombreParams = -1;
-            symbolTable.insert({var, flag});
+        if(symbolTableVar.find(var) == symbolTableVar.end()){
+            FlagVar flagVar;
+            flagVar.used = false;
+            flagVar.affected = false;
+            flagVar.index = index;
+            symbolTableVar.insert({var, flagVar});
             index -= 4;
         }
         else{
@@ -61,12 +68,12 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementCont
 
 antlrcpp::Any SymbolTableVisitor::visitAffectation(ifccParser::AffectationContext *ctx){
     string varName = ctx->lvalue()->VAR()->getText();    
-    if(symbolTable.find(varName)==symbolTable.end()){
+    if(symbolTableVar.find(varName)==symbolTableVar.end()){
         cerr << "Variable " << varName << " non déclarée" << endl;
         exit(1);
     }
     else{
-        symbolTable[varName].affected = true;
+        symbolTableVar[varName].affected = true;
     }
     this->visit(ctx->lvalue());
     this->visit(ctx->expr());
@@ -76,8 +83,8 @@ antlrcpp::Any SymbolTableVisitor::visitAffectation(ifccParser::AffectationContex
 antlrcpp::Any SymbolTableVisitor::visitExprVar(ifccParser::ExprVarContext *ctx){
 
     string varName = ctx->VAR()->getText();
-    if(symbolTable.find(varName)!=symbolTable.end()){
-        symbolTable[varName].used = true;
+    if(symbolTableVar.find(varName)!=symbolTableVar.end()){
+        symbolTableVar[varName].used = true;
     }
     else{
         cerr << "Variable " << varName << " non déclarée" << endl;
@@ -95,15 +102,18 @@ antlrcpp::Any SymbolTableVisitor::visitCall(ifccParser::CallContext* ctx) {
     int nbParams = ctx->liste_param()->expr().size();
 
     if (symbolTableFonction.find(label) == symbolTableFonction.end()) {
-        FlagFonction flag = {declared = false, used = true, nombreParams = nbParams};
-        symbolTableFonction[label] = flag;
+        FlagFonction flag;
+        flag.declared = false;
+        flag.used = true;
+        flag.nombreParams = nbParams;
+        symbolTableFonction.insert({label, flag});
+        cerr << "La fonction " << label << " est appelée avant d'être déclarée" << endl;
     } else if (symbolTableFonction[label].nombreParams == nbParams) {
         symbolTableFonction[label].used = true;
     } else {
         cerr << "La fonction " << label << " est appelée avec le mauvais nb de params" << endl;
+        exit(1);
     }
-
-
 
     for (auto expression : ctx->liste_param()->expr()) {
         this->visit(expression);
@@ -112,7 +122,7 @@ antlrcpp::Any SymbolTableVisitor::visitCall(ifccParser::CallContext* ctx) {
     return 0;
 }
 
-antlrcpp::Any ifccParser::visitDecl_fonction(ifccParser::Decl_fonction *ctx) {
+antlrcpp::Any SymbolTableVisitor::visitDecl_fonction(ifccParser::Decl_fonctionContext *ctx) {
     int nbParams = ctx->decl_sans_assignation()->VAR().size();
     string label = ctx->VAR()->getText();
 
@@ -124,20 +134,24 @@ antlrcpp::Any ifccParser::visitDecl_fonction(ifccParser::Decl_fonction *ctx) {
         } else if (symbolTableFonction[label].nombreParams == nbParams) {
             symbolTableFonction[label].declared = true;
         } else {
-            cerr << "La fonction " << label << " est appelée avec le mauvais nb d'arguments"
+            cerr << "La fonction " << label << " est appelée avec le mauvais nb d'arguments" << endl;
+            exit(1);
         }
     } else {
-        FlagFonction flag = {declared = true, used = false, nombreParams = nbParams};
-        symbolTableFonction[label] = flag;
+        FlagFonction flag;
+        flag.used = false;
+        flag.declared = true;
+        flag.nombreParams = nbParams;
+        symbolTableFonction.insert({label, flag});
     }
-    unordered_map<string, FlagVar> myMap;
-    symbolTableVar[label] = myMap;
-    currentSymbolTable = symbolTableVar[label];
-    int copyIndex = index;
+    
+    unordered_map<string, FlagVar> newSymbolTable;
     index = -4;
-    this->visit(ctx->bloc());
-    index = copyIndex;
+    symbolTableVar = newSymbolTable;
 
+    this->visit(ctx->block());
+
+    cfg_liste.emplace_back(symbolTableVar, label, ctx->block());
 
     return 0;    
 }

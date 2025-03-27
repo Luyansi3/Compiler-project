@@ -199,14 +199,14 @@ void CFG::gen_asm_epilogue(ostream &o){
 string CFG::create_new_tempvar(){
     nextFreeSymbolIndex -= 4;
     string tmpVar = "!tmp" + to_string(abs(nextFreeSymbolIndex));
-    Flag flag = {nextFreeSymbolIndex, false, false};
+    FlagVar flag = {nextFreeSymbolIndex, false, false};
     symbolIndex.insert({tmpVar, flag});
     return tmpVar;
 }
 
 // Constructor for CFG
-CFG::CFG(unordered_map<string, Flag>& symbolIndex, string nameFunction)
-    : symbolIndex(symbolIndex), nextBBnumber(0), nameFunction(nameFunction), nextFreeSymbolIndex(symbolIndex.size() * -4)
+CFG::CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4::tree::ParseTree* tree)
+    : symbolIndex(symbolIndex), nextBBnumber(0), nameFunction(nameFunction), nextFreeSymbolIndex(symbolIndex.size() * -4), tree(tree)
 {
     BasicBlock *bb_prologue = new BasicBlock(this, nameFunction);
     bb_prologue->add_IRInstr(new IRInstrPrologue(bb_prologue));
