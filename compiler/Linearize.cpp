@@ -6,6 +6,10 @@ antlrcpp::Any Linearize::visitProg(ifccParser::ProgContext *ctx)
     // Visit the block of the program
     this->visit(ctx->block());
 
+    for (auto decl_fonction : ctx->decl_fonction()) {
+        this->visit(decl_fonction);
+    }
+
     return 0;
 }
 
@@ -175,4 +179,6 @@ antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
 
     return 0;
 }
+
+
 

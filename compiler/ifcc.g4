@@ -13,7 +13,7 @@ instruction: return_stmt  SEMI
             | call SEMI
             ;
 
-decl_fonction: type VAR OPENPAR  CLOSEPAR block ;
+decl_fonction: type VAR OPENPAR decl_sans_assignation CLOSEPAR block ;
 
 decl_sans_assignation: type VAR (COMMA type VAR)* ;
 
