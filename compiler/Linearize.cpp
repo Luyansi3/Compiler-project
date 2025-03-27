@@ -221,6 +221,7 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
         BasicBlock *bb_endif = new BasicBlock(cfg, cfg->new_BB_name());
         cfg->add_bb(bb_endif);
         bb_endif->exit_true = cfg->current_bb->exit_true;
+        bb_endif->exit_false = cfg->current_bb->exit_false;
         bb_then->exit_true = bb_endif;
         bb_else->exit_true = bb_endif;
         cfg->current_bb->exit_true = bb_then;
@@ -239,6 +240,7 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
         BasicBlock *bb_endif = new BasicBlock(cfg, cfg->new_BB_name());
         cfg->add_bb(bb_endif);
         bb_endif->exit_true = cfg->current_bb->exit_true;
+        bb_endif->exit_false = cfg->current_bb->exit_false;
         bb_then->exit_true = bb_endif;
         cfg->current_bb->exit_true = bb_then;
         cfg->current_bb->exit_false = bb_endif;
@@ -265,6 +267,7 @@ antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
     BasicBlock *bb_end = new BasicBlock(cfg, cfg->new_BB_name());
     cfg->add_bb(bb_end);
     bb_and->exit_true = cfg->current_bb->exit_true;
+    bb_and->exit_false = cfg->current_bb->exit_false;
     cfg->current_bb->exit_true = bb_and;
     cfg->current_bb->exit_false = bb_false;
     cfg->current_bb = bb_and;
@@ -273,6 +276,7 @@ antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
     this->visit(ctx->expr(1));
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     bb_end->exit_true = cfg->current_bb->exit_true;
+    bb_end->exit_false = cfg->current_bb->exit_false;
     cfg->current_bb->exit_true = bb_true;
     cfg->current_bb->exit_false = bb_false;
     bb_false->exit_true = bb_end;
@@ -296,7 +300,7 @@ antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
     BasicBlock *bb_end = new BasicBlock(cfg, cfg->new_BB_name());
     cfg->add_bb(bb_end);
     bb_or->exit_true = cfg->current_bb->exit_true;
-    bb_or->exit_true = bb_true;
+    bb_or->exit_false = cfg->current_bb->exit_false;
     cfg->current_bb->exit_true = bb_true;
     cfg->current_bb->exit_false = bb_or;
     cfg->current_bb = bb_or;
@@ -305,6 +309,7 @@ antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
     this->visit(ctx->expr(1));
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     bb_end->exit_true = cfg->current_bb->exit_true;
+    bb_end->exit_false = cfg->current_bb->exit_false;
     cfg->current_bb->exit_true = bb_true;
     cfg->current_bb->exit_false = bb_false;
     bb_false->exit_true = bb_end;
