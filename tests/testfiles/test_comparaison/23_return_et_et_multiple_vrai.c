@@ -3,5 +3,5 @@ int main() {
     int b = 1;
     int c = 1;
     int d = 1;
-    return a || b || c || d;
+    return a && b && c && d;
 }

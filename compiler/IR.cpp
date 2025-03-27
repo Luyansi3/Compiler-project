@@ -89,6 +89,7 @@ void IRInstrCmpEQ::gen_asm(ostream &o){
     string source2 = this->bb->cfg->IR_reg_to_asm(src2);
     o << "    cmpl " << source1 << ", " << source2 << "\n";
     o << "    sete %al\n";
+    o << "    movzbl %al, %eax\n";
 }
 
 // Generate assembly code for non equal comparison
@@ -97,6 +98,7 @@ void IRInstrCmpNEQ::gen_asm(ostream &o){
     string source2 = this->bb->cfg->IR_reg_to_asm(src2);
     o << "    cmpl " << source1 << ", " << source2 << "\n";
     o << "    setne %al\n";
+    o << "    movzbl %al, %eax\n";
 }
 
 // Generate assembly code for less than comparison
@@ -105,6 +107,7 @@ void IRInstrCmpINF::gen_asm(ostream &o){
     string source2 = this->bb->cfg->IR_reg_to_asm(src2);
     o << "    cmpl " << source1 << ", " << source2 << "\n";
     o << "    setl %al\n";
+    o << "    movzbl %al, %eax\n";
 }
 
 // Generate assembly code for greater than comparison
@@ -113,6 +116,14 @@ void IRInstrCmpSUP::gen_asm(ostream &o){
     string source2 = this->bb->cfg->IR_reg_to_asm(src2);
     o << "    cmpl " << source1 << ", " << source2 << "\n";
     o << "    setg %al\n";
+    o << "    movzbl %al, %eax\n";
+}
+
+// Constructor for BasicBlock
+BasicBlock::BasicBlock(CFG* cfg, string label)
+    : cfg(cfg), label(label), exit_true(nullptr), exit_false(nullptr)
+{
+    this->test_var_name = cfg->create_new_tempvar();
 }
 
 // Generate assembly code for a basic block and its instructions

@@ -32,6 +32,8 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | expr opM expr         #MulDiv
     | expr opA expr         #AddSub
     | expr comp expr    #ExprComp
+    | expr AND expr         #ExprAnd
+    | expr OR expr           #ExprOr
     | VAR                   #ExprVar
     | constante             #ExprConst 
     | affectation           #ExprAffectation 
@@ -70,6 +72,8 @@ EQ: '==';
 NEQ: '!=';
 INF: '<';
 SUP: '>';
+AND: '&&';
+OR: '||';
 OPENPAR       : '(';
 CLOSEPAR      : ')';
 OPENCROCHET   : '{';

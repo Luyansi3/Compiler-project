@@ -31,5 +31,7 @@ public:
     virtual antlrcpp::Any visitExprUnary(ifccParser::ExprUnaryContext *ctx) override;
     virtual antlrcpp::Any visitExprComp(ifccParser::ExprCompContext *ctx) override;
     virtual antlrcpp::Any visitIf_stmt(ifccParser::If_stmtContext *ctx) override;
+    virtual antlrcpp::Any visitExprAnd(ifccParser::ExprAndContext *ctx) override;
+    virtual antlrcpp::Any visitExprOr(ifccParser::ExprOrContext *ctx) override;
 };
 
