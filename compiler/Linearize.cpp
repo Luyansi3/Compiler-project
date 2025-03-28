@@ -319,3 +319,32 @@ antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
     cfg->current_bb = bb_end;
     return 0;
 }
+
+antlrcpp::Any Linearize::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
+    BasicBlock *bb_body = new BasicBlock(cfg, cfg->current_bb->label + "_while_body");
+    cfg->add_bb(bb_body);
+    BasicBlock *bb_test = new BasicBlock(cfg, cfg->current_bb->label + "_while_test");
+    cfg->add_bb(bb_test);
+    BasicBlock *bb_end = new BasicBlock(cfg, cfg->new_BB_name());
+    cfg->add_bb(bb_end);
+
+    bb_end->exit_true = cfg->current_bb->exit_true;
+    bb_end->exit_false = cfg->current_bb->exit_false;
+    cfg->current_bb->exit_true = bb_test;
+    bb_test->exit_true = bb_body;
+    bb_test->exit_false = bb_end;
+    bb_body->exit_true = bb_test;
+
+    cfg->current_bb = bb_test;
+    // Visit the condition expression
+    this->visit(ctx->expr());
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+
+    cfg->current_bb = bb_body;
+    // Visit the body of the while loop
+    this->visit(ctx->block());
+
+    cfg->current_bb = bb_end;
+
+    return 0;
+}
