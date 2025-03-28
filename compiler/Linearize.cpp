@@ -213,44 +213,85 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     BasicBlock *bb_then = new BasicBlock(cfg, cfg->current_bb->label + "_then");
     cfg->add_bb(bb_then);
 
-    if (ctx->block().size() > 1) {
-        // Create a new basic block for the else part
-        BasicBlock *bb_else = new BasicBlock(cfg, cfg->current_bb->label + "_else");
-        cfg->add_bb(bb_else);
-        // Create a new basic block for the merge
-        BasicBlock *bb_endif = new BasicBlock(cfg, cfg->new_BB_name());
-        cfg->add_bb(bb_endif);
-        bb_endif->exit_true = cfg->current_bb->exit_true;
-        bb_endif->exit_false = cfg->current_bb->exit_false;
-        bb_then->exit_true = bb_endif;
-        bb_else->exit_true = bb_endif;
-        cfg->current_bb->exit_true = bb_then;
-        cfg->current_bb->exit_false = bb_else;
-        // Set the current basic block to the then part
-        cfg->current_bb = bb_then;
-        this->visit(ctx->block(0));
-        // Set the current basic block to the else part
-        cfg->current_bb = bb_else;
-        // Visit the else part
-        this->visit(ctx->block(1));
-        // Set the current basic block to the merge
-        cfg->current_bb = bb_endif;
-    } else {
-        // Create a new basic block for the merge
-        BasicBlock *bb_endif = new BasicBlock(cfg, cfg->new_BB_name());
-        cfg->add_bb(bb_endif);
-        bb_endif->exit_true = cfg->current_bb->exit_true;
-        bb_endif->exit_false = cfg->current_bb->exit_false;
-        bb_then->exit_true = bb_endif;
-        cfg->current_bb->exit_true = bb_then;
-        cfg->current_bb->exit_false = bb_endif;
-        // Set the current basic block to the then part
-        cfg->current_bb = bb_then;
-        // Visit the then part
-        this->visit(ctx->block(0));
-        // Set the current basic block to the endif
-        cfg->current_bb = bb_endif;
+    // Create a new basic block for the merge
+    BasicBlock *bb_endif = new BasicBlock(cfg, cfg->new_BB_name());
+    cfg->add_bb(bb_endif);
+    bb_endif->exit_true = cfg->current_bb->exit_true;
+    bb_endif->exit_false = cfg->current_bb->exit_false;
+    bb_then->exit_true = bb_endif;
+    cfg->current_bb->exit_true = bb_then;
+    cfg->current_bb->exit_false = bb_endif;
+
+    if (ctx->else_stmt()) {
+        this->visit(ctx->else_stmt());
     }
+
+    if (ctx->elif_stmt()) {
+        // Create a new basic block for the elif part
+        BasicBlock *bb_elif = new BasicBlock(cfg, cfg->current_bb->label + "_elif");
+        cfg->add_bb(bb_elif);
+        bb_elif->exit_true = bb_endif;
+        cfg->current_bb->exit_false = bb_elif;
+
+        // Set the current basic block to the endif
+        cfg->current_bb = bb_elif;
+        this->visit(ctx->elif_stmt());
+    }
+
+    // Set the current basic block to the then part
+    cfg->current_bb = bb_then;
+    // Visit the then part
+    this->visit(ctx->block());
+
+    // Set the current basic block to the endif
+    cfg->current_bb = bb_endif;
+
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitElif_stmt(ifccParser::Elif_stmtContext *ctx) {
+    // Visit the condition expression
+    this->visit(ctx->expr());
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    // Create a new basic block for the then part
+    BasicBlock *bb_then = new BasicBlock(cfg, cfg->current_bb->label + "_then");
+    cfg->add_bb(bb_then);
+
+    // Create a new basic block for the merge
+    BasicBlock *bb_endif = new BasicBlock(cfg, cfg->new_BB_name());
+    cfg->add_bb(bb_endif);
+    bb_endif->exit_true = cfg->current_bb->exit_true;
+    bb_then->exit_true = bb_endif;
+    cfg->current_bb->exit_true = bb_then;
+    cfg->current_bb->exit_false = bb_endif;
+    // Set the current basic block to the then part
+    cfg->current_bb = bb_then;
+    // Visit the then part
+    this->visit(ctx->block());
+
+    // Set the current basic block to the endif
+    cfg->current_bb = bb_endif;
+
+    if (ctx->elif_stmt()) {
+        this->visit(ctx->elif_stmt());
+    }
+    
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitElse_stmt(ifccParser::Else_stmtContext *ctx) {
+    // Create a new basic block for the else part
+    BasicBlock *bb_else = new BasicBlock(cfg, cfg->current_bb->label + "_else");
+    cfg->add_bb(bb_else);
+    // Retrieve endif bb
+    BasicBlock *bb_endif = cfg->current_bb->exit_false;
+    bb_else->exit_true = bb_endif;
+    cfg->current_bb->exit_false = bb_else;
+    // Set the current basic block to the else part
+    cfg->current_bb = bb_else;
+    // Visit the else part
+    this->visit(ctx->block());
+
     return 0;
 }
 

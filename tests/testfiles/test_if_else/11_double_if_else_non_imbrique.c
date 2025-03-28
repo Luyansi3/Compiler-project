@@ -8,7 +8,7 @@ int main() {
         a = 4;
     }
 
-    if (b == 2){
+    if (b == 1){
         a = 3;
     }
     else{

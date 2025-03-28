@@ -20,7 +20,11 @@ declaration: type decl_element (COMMA decl_element)* ;
 decl_element: VAR
             | affectation ;
 
-if_stmt: IF OPENPAR expr CLOSEPAR block (ELSE block)? ;
+if_stmt: IF OPENPAR expr CLOSEPAR block (elif_stmt)? (else_stmt)? ;
+
+elif_stmt: ELSE IF OPENPAR expr CLOSEPAR block (elif_stmt)? ;
+
+else_stmt: ELSE block ;
 
 while_stmt: WHILE OPENPAR expr CLOSEPAR block ;
 
