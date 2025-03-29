@@ -102,12 +102,11 @@ int main(int argn, const char **argv)
     Linearize code(cfg);
     code.visit(cfg->getTree());
     cfg->gen_asm(cout);
+    delete(cfg);
   }
-  //cout << table.cfg_liste.size() << endl;
-  //CFG cfg = table.cfg_liste[0];
-  //Linearize code(&cfg);
-  //code.visit(cfg.getTree());
-  //cfg.gen_asm(cout);
+
+  
+
   
 
 
