@@ -118,8 +118,6 @@ void BasicBlock::add_IRInstr(IRInstr* instr){
 
 // Destructor for BasicBlock
 BasicBlock::~BasicBlock(){
-    cout << "Deleteing " << this << endl;
-    cout << "BB name " << label << endl;
     for(auto &instr : instrs){
         delete instr;
     }
@@ -195,8 +193,6 @@ CFG::CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4
 
 // Destructor for CFG
 CFG::~CFG(){
-    cout << "deleteing " << this << endl;
-    cout << "CFG name " << nameFunction << endl;
     for(auto &bb : bbs){
         delete bb;
     }
