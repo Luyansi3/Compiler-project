@@ -18,7 +18,7 @@ class SymbolTableVisitor : public ifccBaseVisitor {
     public:
         unordered_map<string, FlagVar> symbolTableVar; // Symbol table to store variable information
         static unordered_map<string, FlagFonction> symbolTableFonction; //Symbol Table to store the function. It is static because common to all Symbol Table.
-        vector<CFG> cfg_liste;
+        static vector<CFG*> cfg_liste;
 
         // Constructor to initialize the base visitor and index
         SymbolTableVisitor(): ifccBaseVisitor(), index(-4) { }
@@ -30,6 +30,7 @@ class SymbolTableVisitor : public ifccBaseVisitor {
         virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override;
         virtual antlrcpp::Any visitCall(ifccParser::CallContext * ctx) override;
         virtual antlrcpp::Any visitDecl_fonction(ifccParser::Decl_fonctionContext *ctx) override;
+        virtual antlrcpp::Any visitDecl_param(ifccParser::Decl_paramContext *ctx) override;
     private:
         int index; // Index to keep track of variable positions
 };
