@@ -3,7 +3,7 @@ grammar ifcc;
 axiom : prog EOF ;
 
 prog : decl_fonction* INT MAIN OPENPAR CLOSEPAR block decl_fonction*;
-block: OPENCROCHET instruction CLOSECROCHET ;
+block: OPENCROCHET instructions CLOSECROCHET ;
 
 instructions: (instruction)* ;
 
@@ -15,9 +15,13 @@ instruction: return_stmt  SEMI
             | while_stmt
             ;
 
-decl_fonction: type VAR OPENPAR decl_sans_assignation CLOSEPAR block ;
+decl_fonction: type VAR OPENPAR decl_params CLOSEPAR block ;
 
-decl_sans_assignation: type VAR (COMMA type VAR)* ;
+decl_params: decl_param (COMMA decl_param)*
+            | ;
+
+decl_param : type VAR ;
+
 
 declaration: type decl_element (COMMA decl_element)* ;
 

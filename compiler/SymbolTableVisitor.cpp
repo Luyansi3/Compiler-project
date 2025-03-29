@@ -1,6 +1,7 @@
 #include "SymbolTableVisitor.h"
 
 unordered_map<string, FlagFonction> SymbolTableVisitor::symbolTableFonction;
+vector<CFG*> SymbolTableVisitor::cfg_liste;
 
 antlrcpp::Any SymbolTableVisitor::visitProg(ifccParser::ProgContext *ctx) {
 
@@ -18,7 +19,8 @@ antlrcpp::Any SymbolTableVisitor::visitProg(ifccParser::ProgContext *ctx) {
 
     this->visit(ctx->block());
 
-    cfg_liste.emplace_back(symbolTableVar, "main", ctx->block());
+    CFG* cfg = new CFG(symbolTableVar, "main", ctx->block(), 0);
+    cfg_liste.push_back(cfg);
 
 
     for (auto decl_fonction : ctx->decl_fonction())
@@ -123,7 +125,7 @@ antlrcpp::Any SymbolTableVisitor::visitCall(ifccParser::CallContext* ctx) {
 }
 
 antlrcpp::Any SymbolTableVisitor::visitDecl_fonction(ifccParser::Decl_fonctionContext *ctx) {
-    int nbParams = ctx->decl_sans_assignation()->VAR().size();
+    int nbParams = ctx->decl_params()->decl_param().size();
     string label = ctx->VAR()->getText();
 
 
@@ -149,11 +151,35 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_fonction(ifccParser::Decl_fonctionCo
     index = -4;
     symbolTableVar = newSymbolTable;
 
+
+
+    this->visit(ctx->decl_params());
+
     this->visit(ctx->block());
 
-    cfg_liste.emplace_back(symbolTableVar, label, ctx->block());
+    CFG* cfg = new CFG(symbolTableVar, label, ctx->block(), nbParams);
+    cfg_liste.push_back(cfg);
 
     return 0;    
+}
+
+
+antlrcpp::Any SymbolTableVisitor::visitDecl_param(ifccParser::Decl_paramContext *ctx) {
+    string var = ctx->VAR()->getText();
+    if(symbolTableVar.find(var) == symbolTableVar.end()){
+        FlagVar flagVar;
+        flagVar.used = false;
+        flagVar.affected = false;
+        flagVar.index = index;
+        symbolTableVar.insert({var, flagVar});
+        index -= 4;
+    }
+    else{
+        cerr<< "Variable " << var << " deja déclaré" << endl;
+        exit(1);
+    }
+
+    return 0;
 }
 
 

@@ -251,7 +251,7 @@ public:
 class CFG
 {
 public:
-    CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4::tree::ParseTree* tree);
+    CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4::tree::ParseTree* tree, int nbParams);
     ~CFG();
 
     void add_bb(BasicBlock *bb);
@@ -275,6 +275,7 @@ public:
     BasicBlock *current_bb;
     BasicBlock *bb_epi;
 
+    int nbParams;
 protected:
     unordered_map<string, FlagVar> symbolIndex; /**< part of the symbol table */
     int nextFreeSymbolIndex;                 /**< to allocate new symbols in the symbol table */

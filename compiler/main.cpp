@@ -85,11 +85,11 @@ int main(int argn, const char **argv)
       
   }
 
-  for (CFG &cfg : table.cfg_liste) {
-    for (auto it=cfg.getSymbolIndex().begin(); it != cfg.getSymbolIndex().end(); ++it){
+  for (CFG *cfg : SymbolTableVisitor::cfg_liste) {
+    for (auto it=cfg->getSymbolIndex().begin(); it != cfg->getSymbolIndex().end(); ++it){
       if (!it->second.used)
       {
-          //cerr << "Var " << it->first << " n'est jamais utilisé" <<endl;
+          cerr << "Var " << it->first << " n'est jamais utilisé" <<endl;
       }
     }
   }
@@ -97,25 +97,19 @@ int main(int argn, const char **argv)
   // Generate assembly code
   cout << ".globl main\n" ;
 
-  //for (CFG cfg : table.cfg_liste) {
-    //cout << cfg.getBbs().size() << endl;
-  //}
-
-  
-  // Create the control flow graph (CFG) using the symbol table
-  for (CFG &cfg : table.cfg_liste) {
-    Linearize code(&cfg);
-    code.visit(cfg.getTree());
-    cfg.gen_asm(cout);
+  //Create the control flow graph (CFG) using the symbol table
+  for (CFG *cfg : SymbolTableVisitor::cfg_liste) {
+    Linearize code(cfg);
+    code.visit(cfg->getTree());
+    cfg->gen_asm(cout);
   }
-  
-  
-  // Linearize the code using IR instructions
+  //cout << table.cfg_liste.size() << endl;
+  //CFG cfg = table.cfg_liste[0];
   //Linearize code(&cfg);
-  //code.visit(tree);
+  //code.visit(cfg.getTree());
+  //cfg.gen_asm(cout);
+  
 
-  
-  
 
   return 0;
 }

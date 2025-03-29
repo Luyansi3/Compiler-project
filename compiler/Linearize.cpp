@@ -6,9 +6,6 @@ antlrcpp::Any Linearize::visitProg(ifccParser::ProgContext *ctx)
     // Visit the block of the program
     this->visit(ctx->block());
 
-    for (auto decl_fonction : ctx->decl_fonction()) {
-        this->visit(decl_fonction);
-    }
 
     return 0;
 }
@@ -164,15 +161,9 @@ antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
         params.push_back(tmp);
     }
 
-
-
-    
-
     cfg->current_bb->add_IRInstr(new IrInstrCall(cfg->current_bb, label, params));
     
-    
-
-
+   
     return 0;
 }
 

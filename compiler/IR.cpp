@@ -23,6 +23,25 @@ void IRInstrNeg::gen_asm(ostream &o){
 void IRInstrPrologue::gen_asm(ostream &o){
     o<< "    pushq %rbp \n";
     o<< "    movq %rsp, %rbp\n";
+    for (int i = 1; i <= bb->cfg->nbParams && i < 7; i++) {
+        if (i==1)
+            o << "    movl" << " " << "%edi" << ", " << -4*i <<"(%rbp)" <<"\n";
+        else if (i==2)
+            o << "    movl" << " " << "%esi" << ", " << -4*i <<"(%rbp)" <<"\n";
+        else if (i==3)
+            o << "    movl" << " " << "%edx" << ", " << -4*i <<"(%rbp)" <<"\n";
+        else if (i==4)
+            o << "    movl" << " " << "%ecx" << ", " << -4*i <<"(%rbp)" <<"\n";
+        else if (i==5)
+            o << "    movl" << " " << "%r8d" << ", " << -4*i <<"(%rbp)" <<"\n";
+        else if (i==6)
+            o << "    movl" << " " << "%r9d" << ", " << -4*i <<"(%rbp)" <<"\n";
+    }
+    
+
+    for (int i = 7; i <= bb->cfg->nbParams; i++) 
+        o << "    movl" << " " << 8*(i-5) << "(%rbp)" << ", " << -4*i << "(%rbp)" << "\n";
+
 }
 
 // Generate assembly code for the function epilogue
@@ -76,7 +95,7 @@ void IrInstrCall::gen_asm(ostream &o) {
             o << "    movl" << " " << param << ", " << "%r9d" <<"\n";
     }
 
-    for (int i = params.size() - 1; i>5; i++) {
+    for (int i = 6; i<params.size(); i++) {
         string param = this->bb->cfg->IR_reg_to_asm(params[i]);
         o << "    pushq" << " " << param << "\n";
     }
@@ -146,6 +165,8 @@ void BasicBlock::add_IRInstr(IRInstr* instr){
 
 // Destructor for BasicBlock
 BasicBlock::~BasicBlock(){
+    cout << "Deleteing " << this << endl;
+    cout << "BB name " << label << endl;
     for(auto &instr : instrs){
         delete instr;
     }
@@ -178,7 +199,7 @@ void CFG::gen_asm(ostream &o){
 // Generate a new basic block name
 string CFG::new_BB_name(){
     nextBBnumber++;
-    return "BB"+ to_string(nextBBnumber);
+    return "BB"+ to_string(nextBBnumber)+"_"+nameFunction;
 }
 
 // Generate assembly code for the function prologue
@@ -205,8 +226,8 @@ string CFG::create_new_tempvar(){
 }
 
 // Constructor for CFG
-CFG::CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4::tree::ParseTree* tree)
-    : symbolIndex(symbolIndex), nextBBnumber(0), nameFunction(nameFunction), nextFreeSymbolIndex(symbolIndex.size() * -4), tree(tree)
+CFG::CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4::tree::ParseTree* tree, int nbParams)
+    : symbolIndex(symbolIndex), nextBBnumber(0), nameFunction(nameFunction), nextFreeSymbolIndex(symbolIndex.size() * -4), tree(tree), nbParams(nbParams)
 {
     BasicBlock *bb_prologue = new BasicBlock(this, nameFunction);
     bb_prologue->add_IRInstr(new IRInstrPrologue(bb_prologue));
@@ -227,6 +248,8 @@ CFG::CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4
 
 // Destructor for CFG
 CFG::~CFG(){
+    cout << "deleteing " << this << endl;
+    cout << "CFG name " << nameFunction << endl;
     for(auto &bb : bbs){
         delete bb;
     }
