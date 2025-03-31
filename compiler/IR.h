@@ -175,6 +175,26 @@ public:
     IRInstrJump(BasicBlock *bb, string label) : IRInstr(bb), label(label) {}
     virtual void gen_asm(ostream &o) override;
 };
+
+class IRInstrExit:public IRInstr
+{
+private :
+    string src;
+public:
+    IRInstrExit(BasicBlock*bb,string src):IRInstr(bb),src(src)
+    {
+    }
+    virtual void gen_asm(ostream&o)override;
+};
+
+class IRInstrJump:public IRInstr
+{
+    private :
+    string label;
+    public:
+    IRInstrJump(BasicBlock*bb,string label):IRInstr(bb),label(label){}
+    virtual void gen_asm(ostream&o)override;
+};
 /**  The class for a basic block */
 
 /* A few important comments.
