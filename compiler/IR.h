@@ -155,6 +155,26 @@ public:
 	IrInstrCall(BasicBlock *bb, string label, vector<string> params) : IRInstr(bb), label(label), params(params) {}
 	virtual void gen_asm(ostream &o) override;
 };
+
+class IRInstrExit:public IRInstr
+{
+private :
+    string src;
+public:
+    IRInstrExit(BasicBlock*bb,string src):IRInstr(bb),src(src)
+    {
+    }
+    virtual void gen_asm(ostream&o)override;
+};
+
+class IRInstrJump:public IRInstr
+{
+    private :
+    string label;
+    public:
+    IRInstrJump(BasicBlock*bb,string label):IRInstr(bb),label(label){}
+    virtual void gen_asm(ostream&o)override;
+};
 /**  The class for a basic block */
 
 /* A few important comments.
@@ -230,13 +250,13 @@ public:
     void gen_asm(ostream &o); /**< x86 assembly code generation for this basic block (very simple) */
 
     void add_IRInstr(IRInstr *inst);
-
     BasicBlock *exit_true;     /**< pointer to the next basic block, true branch. If nullptr, return from procedure */
     BasicBlock *exit_false;    /**< pointer to the next basic block, false branch. If nullptr, the basic block ends with an unconditional jump */
     string label;              /**< label of the BB, also will be the label in the generated code */
     CFG *cfg;                  /**< the CFG where this block belongs */
     vector<IRInstr *> instrs;  /**< the instructions themselves */
     string test_var_name;      /**< when generating IR code for an if(expr) or while(expr) etc, store here the name of the variable that holds the value of expr */
+    bool isExit;
 };
 
 /** The class for the control flow graph, also includes the symbol table */
@@ -253,12 +273,15 @@ public:
     string IR_reg_to_asm(string reg); /**< helper method: inputs an IR reg or input variable, returns e.g. "-24(%rbp)" for the proper value of 24 */
     void gen_asm_prologue(ostream &o);
     void gen_asm_epilogue(ostream &o);
-
+    //void genrateExitAsm(ostream&o);
+    string create_return_var();
     string create_new_tempvar();
     int get_var_index(string name);
-
+    int getNbExitBlock(){return ExitBlockDefined;}
+    void incrementNbExitBlock(){ExitBlockDefined++;}
     string getNameFunction() { return nameFunction; }
-
+    BasicBlock* getExitBB(){return this->bb_Exit;}
+    void setExitBB(BasicBlock*bb){bb_Exit=bb;}
     string new_BB_name();
     BasicBlock *current_bb;
     BasicBlock *bb_epi;
@@ -269,4 +292,6 @@ protected:
     int nextBBnumber;                        /**< just for naming */
     string nameFunction;
     vector<BasicBlock *> bbs;                /**< all the basic blocks of this CFG */
+    BasicBlock *bb_Exit;
+    int ExitBlockDefined;
 };

@@ -10,7 +10,7 @@ class Linearize : public ifccBaseVisitor
 {
 private:
     CFG* cfg; // Control Flow Graph (CFG) pointer
-
+    
 public:
     // Constructor to initialize the CFG pointer
     Linearize(CFG* cfg): cfg(cfg) {}
