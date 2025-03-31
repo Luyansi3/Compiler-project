@@ -15,8 +15,34 @@ antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 {
     // Visit the expression in the return statement
     this->visit(ctx->expr());
+    string retValue=cfg->create_return_var();
 
-    cfg->current_bb->exit_true = cfg->bb_epi;
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, retValue,"!reg"));
+    cfg->current_bb->add_IRInstr(new IRInstrJump(cfg->current_bb,"main_ExitBlock"));
+
+    int nbExitBlocks=cfg->getNbExitBlock();
+    cfg->incrementNbExitBlock();
+    if (nbExitBlocks==1)
+    {
+        BasicBlock *bb_Exit = new BasicBlock(cfg, cfg->getNameFunction() + "_ExitBlock");
+        bb_Exit->add_IRInstr(new IRInstrExit(bb_Exit,retValue));
+        cfg->add_bb(bb_Exit);
+        cfg->current_bb->exit_true = bb_Exit;
+        cfg->setExitBB(bb_Exit);
+    }
+    else
+    {
+        cfg->current_bb->exit_true = cfg->getExitBB();
+    }
+
+
+
+
+    // Create a new basic block for the epilogue
+    // BasicBlock *bb_epilogue = new BasicBlock(cfg, cfg->getNameFunction() + "_epilogue");
+    // bb_epilogue->add_IRInstr(new IRInstrEpilogue(bb_epilogue));
+    // cfg->add_bb(bb_epilogue);
+    // cfg->current_bb->exit_true = bb_epilogue;
     return 0;
 }
 
