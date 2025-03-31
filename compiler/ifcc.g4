@@ -20,9 +20,9 @@ declaration: type decl_element (COMMA decl_element)* ;
 decl_element: VAR
             | affectation ;
 
-if_stmt: IF OPENPAR expr CLOSEPAR block (elif_stmt)? (else_stmt)? ;
+if_stmt: IF OPENPAR expr CLOSEPAR block (elif_stmt)* (else_stmt)? ;
 
-elif_stmt: ELSE IF OPENPAR expr CLOSEPAR block (elif_stmt)? ;
+elif_stmt: ELSE IF OPENPAR expr CLOSEPAR block ;
 
 else_stmt: ELSE block ;
 
@@ -38,13 +38,14 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | opU expr              #ExprUnary
     | expr opM expr         #MulDiv
     | expr opA expr         #AddSub
-    | expr comp expr    #ExprComp
+    | expr compRelationnal expr    #ExprCompRelationnal
+    | expr compEqual expr    #ExprCompEqual
     | expr AND expr         #ExprAnd
     | expr OR expr           #ExprOr
-    | VAR                   #ExprVar
-    | constante             #ExprConst 
     | affectation           #ExprAffectation 
-    | call                  #ExprCall   ;
+    | call                  #ExprCall   
+    | VAR                   #ExprVar
+    | constante             #ExprConst ;
 
 
 liste_param: expr (COMMA expr)*
@@ -54,7 +55,8 @@ call: VAR OPENPAR liste_param CLOSEPAR ;
 
 
 
-comp: EQ | NEQ | INF | SUP ;
+compRelationnal: INF | SUP ;
+compEqual: EQ | NEQ ;
 
 opU: MINUS ;
 

@@ -172,9 +172,34 @@ antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
     return 0;
 }
 
-antlrcpp::Any Linearize::visitExprComp(ifccParser::ExprCompContext *ctx)
+antlrcpp::Any Linearize::visitExprCompRelationnal(ifccParser::ExprCompRelationnalContext *ctx)
 {
-    ifccParser::CompContext *ctxComp = ctx->comp();
+    ifccParser::CompRelationnalContext *ctxComp = ctx->compRelationnal();
+    ifccParser::ExprContext *ctxExpr1 = ctx->expr(0);
+    ifccParser::ExprContext *ctxExpr2 = ctx->expr(1);
+
+    // Visit the second expression
+    this->visit(ctxExpr2);
+    string tmp1 = cfg->create_new_tempvar();
+    // Add a copy instruction to store the result in a temporary variable
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+    // Visit the first expression
+    this->visit(ctxExpr1);
+
+    if (ctxComp->INF()) {
+        // Add a comparison instruction
+        cfg->current_bb->add_IRInstr(new IRInstrCmpINF(cfg->current_bb, tmp1, "!reg"));
+    }
+    else if (ctxComp->SUP()) {
+        // Add a comparison instruction
+        cfg->current_bb->add_IRInstr(new IRInstrCmpSUP(cfg->current_bb, tmp1, "!reg"));
+    }
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitExprCompEqual(ifccParser::ExprCompEqualContext *ctx)
+{
+    ifccParser::CompEqualContext *ctxComp = ctx->compEqual();
     ifccParser::ExprContext *ctxExpr1 = ctx->expr(0);
     ifccParser::ExprContext *ctxExpr2 = ctx->expr(1);
 
@@ -193,14 +218,6 @@ antlrcpp::Any Linearize::visitExprComp(ifccParser::ExprCompContext *ctx)
     else if (ctxComp->NEQ()) {
         // Add a comparison instruction
         cfg->current_bb->add_IRInstr(new IRInstrCmpNEQ(cfg->current_bb, tmp1, "!reg"));
-    }
-    else if (ctxComp->INF()) {
-        // Add a comparison instruction
-        cfg->current_bb->add_IRInstr(new IRInstrCmpINF(cfg->current_bb, tmp1, "!reg"));
-    }
-    else if (ctxComp->SUP()) {
-        // Add a comparison instruction
-        cfg->current_bb->add_IRInstr(new IRInstrCmpSUP(cfg->current_bb, tmp1, "!reg"));
     }
     return 0;
 }
@@ -226,16 +243,20 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
         this->visit(ctx->else_stmt());
     }
 
-    if (ctx->elif_stmt()) {
+    ifccParser::Elif_stmtContext* elif = ctx->elif_stmt(0);
+    int i = 0;
+    while(elif != nullptr) {
         // Create a new basic block for the elif part
         BasicBlock *bb_elif = new BasicBlock(cfg, cfg->current_bb->label + "_elif");
         cfg->add_bb(bb_elif);
         bb_elif->exit_true = bb_endif;
         cfg->current_bb->exit_false = bb_elif;
-
         // Set the current basic block to the endif
         cfg->current_bb = bb_elif;
-        this->visit(ctx->elif_stmt());
+        this->visit(ctx->elif_stmt(i));
+        i++;
+        elif = ctx->elif_stmt(i);
+
     }
 
     // Set the current basic block to the then part
@@ -272,9 +293,9 @@ antlrcpp::Any Linearize::visitElif_stmt(ifccParser::Elif_stmtContext *ctx) {
     // Set the current basic block to the endif
     cfg->current_bb = bb_endif;
 
-    if (ctx->elif_stmt()) {
-        this->visit(ctx->elif_stmt());
-    }
+    // if (ctx->elif_stmt()) {
+    //     this->visit(ctx->elif_stmt());
+    // }
     
     return 0;
 }
