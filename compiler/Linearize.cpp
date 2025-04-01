@@ -15,11 +15,7 @@ antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
     // Visit the expression in the return statement
     this->visit(ctx->expr());
 
-    // Create a new basic block for the epilogue
-    BasicBlock *bb_epilogue = new BasicBlock(cfg, cfg->getNameFunction() + "_epilogue");
-    bb_epilogue->add_IRInstr(new IRInstrEpilogue(bb_epilogue));
-    cfg->add_bb(bb_epilogue);
-    cfg->current_bb->exit_true = bb_epilogue;
+    cfg->current_bb->exit_true = cfg->bb_epi;
     return 0;
 }
 
@@ -176,3 +172,249 @@ antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
     return 0;
 }
 
+antlrcpp::Any Linearize::visitExprCompRelationnal(ifccParser::ExprCompRelationnalContext *ctx)
+{
+    ifccParser::CompRelationnalContext *ctxComp = ctx->compRelationnal();
+    ifccParser::ExprContext *ctxExpr1 = ctx->expr(0);
+    ifccParser::ExprContext *ctxExpr2 = ctx->expr(1);
+
+    // Visit the second expression
+    this->visit(ctxExpr2);
+    string tmp1 = cfg->create_new_tempvar();
+    // Add a copy instruction to store the result in a temporary variable
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+    // Visit the first expression
+    this->visit(ctxExpr1);
+
+    if (ctxComp->INF()) {
+        // Add a comparison instruction
+        cfg->current_bb->add_IRInstr(new IRInstrCmpINF(cfg->current_bb, tmp1, "!reg"));
+    }
+    else if (ctxComp->SUP()) {
+        // Add a comparison instruction
+        cfg->current_bb->add_IRInstr(new IRInstrCmpSUP(cfg->current_bb, tmp1, "!reg"));
+    }
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitExprCompEqual(ifccParser::ExprCompEqualContext *ctx)
+{
+    ifccParser::CompEqualContext *ctxComp = ctx->compEqual();
+    ifccParser::ExprContext *ctxExpr1 = ctx->expr(0);
+    ifccParser::ExprContext *ctxExpr2 = ctx->expr(1);
+
+    // Visit the second expression
+    this->visit(ctxExpr2);
+    string tmp1 = cfg->create_new_tempvar();
+    // Add a copy instruction to store the result in a temporary variable
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+    // Visit the first expression
+    this->visit(ctxExpr1);
+
+    if (ctxComp->EQ()) {
+        // Add a comparison instruction
+        cfg->current_bb->add_IRInstr(new IRInstrCmpEQ(cfg->current_bb, tmp1, "!reg"));
+    }
+    else if (ctxComp->NEQ()) {
+        // Add a comparison instruction
+        cfg->current_bb->add_IRInstr(new IRInstrCmpNEQ(cfg->current_bb, tmp1, "!reg"));
+    }
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
+    BasicBlock *bb_init = cfg->current_bb;
+    // Visit the condition expression
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
+    this->visit(ctx->expr());
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    // Create a new basic block for the then part
+    BasicBlock *bb_then = new BasicBlock(cfg, cfg->current_bb->label + "_then");
+    cfg->add_bb(bb_then);
+
+    // Create a new basic block for the merge
+    BasicBlock *bb_endif = new BasicBlock(cfg, cfg->new_BB_name());
+    cfg->add_bb(bb_endif);
+    bb_endif->exit_true = cfg->current_bb->exit_true;
+    bb_endif->exit_false = cfg->current_bb->exit_false;
+    bb_then->exit_true = bb_endif;
+    cfg->current_bb->exit_true = bb_then;
+    cfg->current_bb->exit_false = bb_endif;
+
+    
+    // Set the current basic block to the then part
+    cfg->current_bb = bb_then;
+    // Visit the then part
+    this->visit(ctx->block());
+
+    // Set the current basic block to the endif
+    cfg->current_bb = bb_init;
+
+    ifccParser::Elif_stmtContext* elif = ctx->elif_stmt(0);
+    int i = 0;
+    while(elif != nullptr) {
+        // Create a new basic block for the elif part
+        BasicBlock *bb_elif = new BasicBlock(cfg, cfg->current_bb->label + "_elif");
+        cfg->add_bb(bb_elif);
+        bb_elif->test_var_name = cfg->create_new_tempvar();
+        bb_elif->exit_true = bb_endif;
+        cfg->current_bb->exit_false = bb_elif;
+        // Set the current basic block to the endif
+        cfg->current_bb = bb_elif;
+
+        this->visit(elif);
+        i++;
+        elif = ctx->elif_stmt(i);
+
+    }
+
+    if (ctx->else_stmt()) {
+        this->visit(ctx->else_stmt());
+    }
+
+    cfg->current_bb = bb_endif;
+
+
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitElif_stmt(ifccParser::Elif_stmtContext *ctx) {
+    // Visit the condition expression
+    this->visit(ctx->expr());
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    // Create a new basic block for the then part
+    BasicBlock *bb_then = new BasicBlock(cfg, cfg->current_bb->label + "_then");
+    cfg->add_bb(bb_then);
+
+    // Create a new basic block for the merge
+    BasicBlock *bb_endif = cfg->current_bb->exit_true;
+    BasicBlock *bb_init = cfg->current_bb;
+    // bb_endif->exit_true = cfg->current_bb->exit_true;
+    bb_then->exit_true = bb_endif;
+    cfg->current_bb->exit_true = bb_then;
+    cfg->current_bb->exit_false = bb_endif;
+    // Set the current basic block to the then part
+    cfg->current_bb = bb_then;
+    // Visit the then part
+    this->visit(ctx->block());
+
+    // Set the current basic block to the endif
+    cfg->current_bb = bb_init;
+
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitElse_stmt(ifccParser::Else_stmtContext *ctx) {
+    BasicBlock *bb_init = cfg->current_bb;
+    // Create a new basic block for the else part
+    BasicBlock *bb_else = new BasicBlock(cfg, cfg->current_bb->label + "_else");
+    cfg->add_bb(bb_else);
+    // Retrieve endif bb
+    BasicBlock *bb_endif = cfg->current_bb->exit_false;
+    bb_else->exit_true = bb_endif;
+    cfg->current_bb->exit_false = bb_else;
+    // Set the current basic block to the else part
+    cfg->current_bb = bb_else;
+    // Visit the else part
+    this->visit(ctx->block());
+    cfg->current_bb = bb_init;
+
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
+    // Visit the condition expression
+    this->visit(ctx->expr(0));
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    BasicBlock *bb_and = new BasicBlock(cfg, cfg->current_bb->label + "_and");
+    cfg->add_bb(bb_and);
+    BasicBlock *bb_false = new BasicBlock(cfg, cfg->current_bb->label + "_false");
+    cfg->add_bb(bb_false);
+    BasicBlock *bb_true = new BasicBlock(cfg, cfg->current_bb->label + "_true");
+    cfg->add_bb(bb_true);
+    BasicBlock *bb_end = new BasicBlock(cfg, cfg->new_BB_name());
+    cfg->add_bb(bb_end);
+    bb_and->exit_true = cfg->current_bb->exit_true;
+    bb_and->exit_false = cfg->current_bb->exit_false;
+    cfg->current_bb->exit_true = bb_and;
+    cfg->current_bb->exit_false = bb_false;
+    cfg->current_bb = bb_and;
+
+    // Visit the condition expression
+    this->visit(ctx->expr(1));
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    bb_end->exit_true = cfg->current_bb->exit_true;
+    bb_end->exit_false = cfg->current_bb->exit_false;
+    cfg->current_bb->exit_true = bb_true;
+    cfg->current_bb->exit_false = bb_false;
+    bb_false->exit_true = bb_end;
+    bb_true->exit_true = bb_end;
+    bb_true->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", 1));
+    bb_false->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", 0));
+    cfg->current_bb = bb_end;
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
+    // Visit the condition expression
+    this->visit(ctx->expr(0));
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    BasicBlock *bb_or = new BasicBlock(cfg, cfg->current_bb->label + "_or");
+    cfg->add_bb(bb_or);
+    BasicBlock *bb_true = new BasicBlock(cfg, cfg->current_bb->label + "_true");
+    cfg->add_bb(bb_true);
+    BasicBlock *bb_false = new BasicBlock(cfg, cfg->current_bb->label + "_false");
+    cfg->add_bb(bb_false);
+    BasicBlock *bb_end = new BasicBlock(cfg, cfg->new_BB_name());
+    cfg->add_bb(bb_end);
+    bb_or->exit_true = cfg->current_bb->exit_true;
+    bb_or->exit_false = cfg->current_bb->exit_false;
+    cfg->current_bb->exit_true = bb_true;
+    cfg->current_bb->exit_false = bb_or;
+    cfg->current_bb = bb_or;
+
+    // Visit the condition expression
+    this->visit(ctx->expr(1));
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    bb_end->exit_true = cfg->current_bb->exit_true;
+    bb_end->exit_false = cfg->current_bb->exit_false;
+    cfg->current_bb->exit_true = bb_true;
+    cfg->current_bb->exit_false = bb_false;
+    bb_false->exit_true = bb_end;
+    bb_true->exit_true = bb_end;
+    bb_true->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", 1));
+    bb_false->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", 0));
+    cfg->current_bb = bb_end;
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
+    BasicBlock *bb_body = new BasicBlock(cfg, cfg->current_bb->label + "_while_body");
+    cfg->add_bb(bb_body);
+    BasicBlock *bb_test = new BasicBlock(cfg, cfg->current_bb->label + "_while_test");
+    cfg->add_bb(bb_test);
+    BasicBlock *bb_end = new BasicBlock(cfg, cfg->new_BB_name());
+    cfg->add_bb(bb_end);
+
+    bb_end->exit_true = cfg->current_bb->exit_true;
+    bb_end->exit_false = cfg->current_bb->exit_false;
+    cfg->current_bb->exit_true = bb_test;
+    bb_test->exit_true = bb_body;
+    bb_test->exit_false = bb_end;
+    bb_body->exit_true = bb_test;
+
+    cfg->current_bb = bb_test;
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
+
+    // Visit the condition expression
+    this->visit(ctx->expr());
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+
+    cfg->current_bb = bb_body;
+    // Visit the body of the while loop
+    this->visit(ctx->block());
+
+    cfg->current_bb = bb_end;
+
+    return 0;
+}

@@ -11,6 +11,8 @@ instruction: return_stmt  SEMI
             | declaration  SEMI 
             | expr  SEMI
             | call SEMI
+            | if_stmt
+            | while_stmt
             ;
 
 declaration: type decl_element (COMMA decl_element)* ;
@@ -18,6 +20,13 @@ declaration: type decl_element (COMMA decl_element)* ;
 decl_element: VAR
             | affectation ;
 
+if_stmt: IF OPENPAR expr CLOSEPAR block (elif_stmt)* (else_stmt)? ;
+
+elif_stmt: ELSE IF OPENPAR expr CLOSEPAR block ;
+
+else_stmt: ELSE block ;
+
+while_stmt: WHILE OPENPAR expr CLOSEPAR block ;
 
 affectation: lvalue EQUAL expr ;
 
@@ -29,10 +38,14 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | opU expr              #ExprUnary
     | expr opM expr         #MulDiv
     | expr opA expr         #AddSub
-    | VAR                   #ExprVar
-    | constante             #ExprConst 
+    | expr compRelationnal expr    #ExprCompRelationnal
+    | expr compEqual expr    #ExprCompEqual
+    | expr AND expr         #ExprAnd
+    | expr OR expr           #ExprOr
     | affectation           #ExprAffectation 
-    | call                  #ExprCall   ;
+    | call                  #ExprCall   
+    | VAR                   #ExprVar
+    | constante             #ExprConst ;
 
 
 liste_param: expr (COMMA expr)*
@@ -41,6 +54,9 @@ liste_param: expr (COMMA expr)*
 call: VAR OPENPAR liste_param CLOSEPAR ;
 
 
+
+compRelationnal: INF | SUP ;
+compEqual: EQ | NEQ ;
 
 opU: MINUS ;
 
@@ -56,9 +72,18 @@ constante: CONSTINT
 INT: 'int' ;
 RETURN : 'return' ;
 MAIN: 'main';
+IF: 'if';
+WHILE: 'while' ;
+ELSE: 'else';
 VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
 CONSTINT : [0-9]+ ;
 CONSTCHAR : '\''[a-zA-Z0-9]'\'' ;
+EQ: '==';
+NEQ: '!=';
+INF: '<';
+SUP: '>';
+AND: '&&';
+OR: '||';
 OPENPAR       : '(';
 CLOSEPAR      : ')';
 OPENCROCHET   : '{';

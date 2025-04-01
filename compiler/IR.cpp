@@ -83,12 +83,59 @@ void IrInstrCall::gen_asm(ostream &o) {
     o << "    call" << " " << label << "\n";
 }
 
+// Generate assembly code for comparison
+void IRInstrCmpEQ::gen_asm(ostream &o){
+    string source1 = this->bb->cfg->IR_reg_to_asm(src1);
+    string source2 = this->bb->cfg->IR_reg_to_asm(src2);
+    o << "    cmpl " << source1 << ", " << source2 << "\n";
+    o << "    sete %al\n";
+    o << "    movzbl %al, %eax\n";
+}
+
+// Generate assembly code for non equal comparison
+void IRInstrCmpNEQ::gen_asm(ostream &o){
+    string source1 = this->bb->cfg->IR_reg_to_asm(src1);
+    string source2 = this->bb->cfg->IR_reg_to_asm(src2);
+    o << "    cmpl " << source1 << ", " << source2 << "\n";
+    o << "    setne %al\n";
+    o << "    movzbl %al, %eax\n";
+}
+
+// Generate assembly code for less than comparison
+void IRInstrCmpINF::gen_asm(ostream &o){
+    string source1 = this->bb->cfg->IR_reg_to_asm(src1);
+    string source2 = this->bb->cfg->IR_reg_to_asm(src2);
+    o << "    cmpl " << source1 << ", " << source2 << "\n";
+    o << "    setl %al\n";
+    o << "    movzbl %al, %eax\n";
+}
+
+// Generate assembly code for greater than comparison
+void IRInstrCmpSUP::gen_asm(ostream &o){
+    string source1 = this->bb->cfg->IR_reg_to_asm(src1);
+    string source2 = this->bb->cfg->IR_reg_to_asm(src2);
+    o << "    cmpl " << source1 << ", " << source2 << "\n";
+    o << "    setg %al\n";
+    o << "    movzbl %al, %eax\n";
+}
+
 
 // Generate assembly code for a basic block and its instructions
 void BasicBlock::gen_asm(ostream& o){
     o << " " << label << ":" <<"\n"; 
     for(auto &instr : instrs){
         instr->gen_asm(o);
+    }
+
+    if (exit_true != nullptr && exit_false != nullptr) {
+        string eval = this->cfg->IR_reg_to_asm(test_var_name);
+        o << "    cmpl $0, " << eval << "\n";
+        o << "    je " << exit_false->label << "\n";
+        o << "    jmp " << exit_true->label << "\n";
+    }
+    else if (exit_true != nullptr) {
+        o << "    jmp " << exit_true->label << "\n";
+        
     }
 }
 
@@ -106,7 +153,6 @@ BasicBlock::~BasicBlock(){
 
 // Add a basic block to the CFG
 void CFG::add_bb(BasicBlock* bb){
-    nextBBnumber++;
     bbs.push_back(bb);
 }
 
@@ -131,6 +177,7 @@ void CFG::gen_asm(ostream &o){
 
 // Generate a new basic block name
 string CFG::new_BB_name(){
+    nextBBnumber++;
     return "BB"+ to_string(nextBBnumber);
 }
 
@@ -166,10 +213,16 @@ CFG::CFG(unordered_map<string, Flag>& symbolIndex, string nameFunction)
     add_bb(bb_prologue);
 
     BasicBlock *bb_body = new BasicBlock(this, new_BB_name());
-    nextBBnumber++;
     add_bb(bb_body);
     current_bb = bb_body;
     bb_prologue->exit_true = bb_body;
+
+    // Create a new basic block for the epilogue
+    BasicBlock *bb_epilogue = new BasicBlock(this, getNameFunction() + "_epilogue");
+    bb_epilogue->add_IRInstr(new IRInstrEpilogue(bb_epilogue));
+    add_bb(bb_epilogue);
+    bb_body->exit_true = bb_epilogue;
+    this->bb_epi = bb_epilogue;
 }
 
 // Destructor for CFG

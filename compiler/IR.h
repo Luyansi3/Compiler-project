@@ -181,10 +181,51 @@ Possible optimization:
 	   followed by a conditional jump to the exit_false branch
 */
 
+class IRInstrCmpEQ : public IRInstr
+{
+private:
+    string src1;
+    string src2;
+public:
+    IRInstrCmpEQ(BasicBlock *bb, string src1, string src2) : IRInstr(bb), src1(src1), src2(src2) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrCmpNEQ : public IRInstr
+{
+private:
+    string src1;
+    string src2;
+public:
+    IRInstrCmpNEQ(BasicBlock *bb, string src1, string src2) : IRInstr(bb), src1(src1), src2(src2) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrCmpINF : public IRInstr
+{
+private:
+    string src1;
+    string src2;
+public:
+    IRInstrCmpINF(BasicBlock *bb, string src1, string src2) : IRInstr(bb), src1(src1), src2(src2) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrCmpSUP : public IRInstr
+{
+private:
+    string src1;
+    string src2;
+public:
+    IRInstrCmpSUP(BasicBlock *bb, string src1, string src2) : IRInstr(bb), src1(src1), src2(src2) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+/** The class for a basic block */
 class BasicBlock
 {
 public:
-    BasicBlock(CFG *cfg, string entry_label) : cfg(cfg), label(entry_label) {}
+    BasicBlock(CFG *cfg, string entry_label) : cfg(cfg), label(entry_label), exit_true(nullptr), exit_false(nullptr) {}
     ~BasicBlock();
     void gen_asm(ostream &o); /**< x86 assembly code generation for this basic block (very simple) */
 
@@ -220,6 +261,7 @@ public:
 
     string new_BB_name();
     BasicBlock *current_bb;
+    BasicBlock *bb_epi;
 
 protected:
     unordered_map<string, Flag> symbolIndex; /**< part of the symbol table */
