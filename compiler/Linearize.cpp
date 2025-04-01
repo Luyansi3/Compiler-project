@@ -223,7 +223,9 @@ antlrcpp::Any Linearize::visitExprCompEqual(ifccParser::ExprCompEqualContext *ct
 }
 
 antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
+    BasicBlock *bb_init = cfg->current_bb;
     // Visit the condition expression
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     this->visit(ctx->expr());
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     // Create a new basic block for the then part
@@ -239,9 +241,14 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     cfg->current_bb->exit_true = bb_then;
     cfg->current_bb->exit_false = bb_endif;
 
-    if (ctx->else_stmt()) {
-        this->visit(ctx->else_stmt());
-    }
+    
+    // Set the current basic block to the then part
+    cfg->current_bb = bb_then;
+    // Visit the then part
+    this->visit(ctx->block());
+
+    // Set the current basic block to the endif
+    cfg->current_bb = bb_init;
 
     ifccParser::Elif_stmtContext* elif = ctx->elif_stmt(0);
     int i = 0;
@@ -249,23 +256,24 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
         // Create a new basic block for the elif part
         BasicBlock *bb_elif = new BasicBlock(cfg, cfg->current_bb->label + "_elif");
         cfg->add_bb(bb_elif);
+        bb_elif->test_var_name = cfg->create_new_tempvar();
         bb_elif->exit_true = bb_endif;
         cfg->current_bb->exit_false = bb_elif;
         // Set the current basic block to the endif
         cfg->current_bb = bb_elif;
-        this->visit(ctx->elif_stmt(i));
+
+        this->visit(elif);
         i++;
         elif = ctx->elif_stmt(i);
 
     }
 
-    // Set the current basic block to the then part
-    cfg->current_bb = bb_then;
-    // Visit the then part
-    this->visit(ctx->block());
+    if (ctx->else_stmt()) {
+        this->visit(ctx->else_stmt());
+    }
 
-    // Set the current basic block to the endif
     cfg->current_bb = bb_endif;
+
 
     return 0;
 }
@@ -279,9 +287,9 @@ antlrcpp::Any Linearize::visitElif_stmt(ifccParser::Elif_stmtContext *ctx) {
     cfg->add_bb(bb_then);
 
     // Create a new basic block for the merge
-    BasicBlock *bb_endif = new BasicBlock(cfg, cfg->new_BB_name());
-    cfg->add_bb(bb_endif);
-    bb_endif->exit_true = cfg->current_bb->exit_true;
+    BasicBlock *bb_endif = cfg->current_bb->exit_true;
+    BasicBlock *bb_init = cfg->current_bb;
+    // bb_endif->exit_true = cfg->current_bb->exit_true;
     bb_then->exit_true = bb_endif;
     cfg->current_bb->exit_true = bb_then;
     cfg->current_bb->exit_false = bb_endif;
@@ -291,16 +299,13 @@ antlrcpp::Any Linearize::visitElif_stmt(ifccParser::Elif_stmtContext *ctx) {
     this->visit(ctx->block());
 
     // Set the current basic block to the endif
-    cfg->current_bb = bb_endif;
+    cfg->current_bb = bb_init;
 
-    // if (ctx->elif_stmt()) {
-    //     this->visit(ctx->elif_stmt());
-    // }
-    
     return 0;
 }
 
 antlrcpp::Any Linearize::visitElse_stmt(ifccParser::Else_stmtContext *ctx) {
+    BasicBlock *bb_init = cfg->current_bb;
     // Create a new basic block for the else part
     BasicBlock *bb_else = new BasicBlock(cfg, cfg->current_bb->label + "_else");
     cfg->add_bb(bb_else);
@@ -312,6 +317,7 @@ antlrcpp::Any Linearize::visitElse_stmt(ifccParser::Else_stmtContext *ctx) {
     cfg->current_bb = bb_else;
     // Visit the else part
     this->visit(ctx->block());
+    cfg->current_bb = bb_init;
 
     return 0;
 }

@@ -225,7 +225,7 @@ public:
 class BasicBlock
 {
 public:
-    BasicBlock(CFG *cfg, string entry_label);
+    BasicBlock(CFG *cfg, string entry_label) : cfg(cfg), label(entry_label), exit_true(nullptr), exit_false(nullptr) {}
     ~BasicBlock();
     void gen_asm(ostream &o); /**< x86 assembly code generation for this basic block (very simple) */
 

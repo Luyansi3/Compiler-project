@@ -119,12 +119,6 @@ void IRInstrCmpSUP::gen_asm(ostream &o){
     o << "    movzbl %al, %eax\n";
 }
 
-// Constructor for BasicBlock
-BasicBlock::BasicBlock(CFG* cfg, string label)
-    : cfg(cfg), label(label), exit_true(nullptr), exit_false(nullptr)
-{
-    this->test_var_name = cfg->create_new_tempvar();
-}
 
 // Generate assembly code for a basic block and its instructions
 void BasicBlock::gen_asm(ostream& o){
