@@ -49,7 +49,7 @@ public:
 
     /** Actual code generation */
     virtual void gen_asm(ostream &o) = 0; /**< x86 assembly code generation for this IR instruction */
-    virtual ~IRInstr(){}                  /**< Destructor */
+    virtual ~IRInstr() {}                 /**< Destructor */
 
 protected:
     BasicBlock *bb; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belongs to */
@@ -102,8 +102,9 @@ public:
 class IRInstrEpilogue : public IRInstr
 {
 public:
-    IRInstrEpilogue(BasicBlock *bb) : IRInstr(bb) {}
+    IRInstrEpilogue(BasicBlock *bb) : IRInstr(bb){}
     virtual void gen_asm(ostream &o) override;
+
 };
 
 // Class for addition
@@ -156,57 +157,59 @@ public:
 class IrInstrCall : public IRInstr
 {
 private:
-	string label;
-	vector<string> params;
+    string label;
+    vector<string> params;
 
 public:
-	IrInstrCall(BasicBlock *bb, string label, vector<string> params) : IRInstr(bb), label(label), params(params) {}
-	virtual void gen_asm(ostream &o) override;
+    IrInstrCall(BasicBlock *bb, string label, vector<string> params) : IRInstr(bb), label(label), params(params) {}
+    virtual void gen_asm(ostream &o) override;
 };
 
-class IRInstrExit:public IRInstr
+class IRInstrExit : public IRInstr
 {
-private :
+private:
     string src;
+
 public:
-    IRInstrExit(BasicBlock*bb,string src):IRInstr(bb),src(src)
+    IRInstrExit(BasicBlock *bb, string src) : IRInstr(bb), src(src)
     {
     }
-    virtual void gen_asm(ostream&o)override;
+    virtual void gen_asm(ostream &o) override;
 };
 
-class IRInstrJump:public IRInstr
+class IRInstrJump : public IRInstr
 {
-    private :
+private:
     string label;
-    public:
-    IRInstrJump(BasicBlock*bb,string label):IRInstr(bb),label(label){}
-    virtual void gen_asm(ostream&o)override;
+
+public:
+    IRInstrJump(BasicBlock *bb, string label) : IRInstr(bb), label(label) {}
+    virtual void gen_asm(ostream &o) override;
 };
 /**  The class for a basic block */
 
 /* A few important comments.
-	 IRInstr has no jump instructions.
-	 cmp_* instructions behaves as an arithmetic two-operand instruction (add or mult),
-	  returning a boolean value (as an int)
+     IRInstr has no jump instructions.
+     cmp_* instructions behaves as an arithmetic two-operand instruction (add or mult),
+      returning a boolean value (as an int)
 
-	 Assembly jumps are generated as follows:
-	 BasicBlock::gen_asm() first calls IRInstr::gen_asm() on all its instructions, and then
-			if  exit_true  is a  nullptr,
-			the epilogue is generated
-		else if exit_false is a nullptr,
-		  an unconditional jmp to the exit_true branch is generated
-				else (we have two successors, hence a branch)
-		  an instruction comparing the value of test_var_name to true is generated,
-					followed by a conditional branch to the exit_false branch,
-					followed by an unconditional branch to the exit_true branch
-	 The attribute test_var_name itself is defined when converting
+     Assembly jumps are generated as follows:
+     BasicBlock::gen_asm() first calls IRInstr::gen_asm() on all its instructions, and then
+            if  exit_true  is a  nullptr,
+            the epilogue is generated
+        else if exit_false is a nullptr,
+          an unconditional jmp to the exit_true branch is generated
+                else (we have two successors, hence a branch)
+          an instruction comparing the value of test_var_name to true is generated,
+                    followed by a conditional branch to the exit_false branch,
+                    followed by an unconditional branch to the exit_true branch
+     The attribute test_var_name itself is defined when converting
   the if, while, etc of the AST  to IR.
 
 Possible optimization:
-	 a cmp_* comparison instructions, if it is the last instruction of its block,
-	   generates an actual assembly comparison
-	   followed by a conditional jump to the exit_false branch
+     a cmp_* comparison instructions, if it is the last instruction of its block,
+       generates an actual assembly comparison
+       followed by a conditional jump to the exit_false branch
 */
 
 class IRInstrCmpEQ : public IRInstr
@@ -214,6 +217,7 @@ class IRInstrCmpEQ : public IRInstr
 private:
     string src1;
     string src2;
+
 public:
     IRInstrCmpEQ(BasicBlock *bb, string src1, string src2) : IRInstr(bb), src1(src1), src2(src2) {}
     virtual void gen_asm(ostream &o) override;
@@ -224,6 +228,7 @@ class IRInstrCmpNEQ : public IRInstr
 private:
     string src1;
     string src2;
+
 public:
     IRInstrCmpNEQ(BasicBlock *bb, string src1, string src2) : IRInstr(bb), src1(src1), src2(src2) {}
     virtual void gen_asm(ostream &o) override;
@@ -234,6 +239,7 @@ class IRInstrCmpINF : public IRInstr
 private:
     string src1;
     string src2;
+
 public:
     IRInstrCmpINF(BasicBlock *bb, string src1, string src2) : IRInstr(bb), src1(src1), src2(src2) {}
     virtual void gen_asm(ostream &o) override;
@@ -244,6 +250,7 @@ class IRInstrCmpSUP : public IRInstr
 private:
     string src1;
     string src2;
+
 public:
     IRInstrCmpSUP(BasicBlock *bb, string src1, string src2) : IRInstr(bb), src1(src1), src2(src2) {}
     virtual void gen_asm(ostream &o) override;
@@ -258,12 +265,12 @@ public:
     void gen_asm(ostream &o); /**< x86 assembly code generation for this basic block (very simple) */
 
     void add_IRInstr(IRInstr *inst);
-    BasicBlock *exit_true;     /**< pointer to the next basic block, true branch. If nullptr, return from procedure */
-    BasicBlock *exit_false;    /**< pointer to the next basic block, false branch. If nullptr, the basic block ends with an unconditional jump */
-    string label;              /**< label of the BB, also will be the label in the generated code */
-    CFG *cfg;                  /**< the CFG where this block belongs */
-    vector<IRInstr *> instrs;  /**< the instructions themselves */
-    string test_var_name;      /**< when generating IR code for an if(expr) or while(expr) etc, store here the name of the variable that holds the value of expr */
+    BasicBlock *exit_true;    /**< pointer to the next basic block, true branch. If nullptr, return from procedure */
+    BasicBlock *exit_false;   /**< pointer to the next basic block, false branch. If nullptr, the basic block ends with an unconditional jump */
+    string label;             /**< label of the BB, also will be the label in the generated code */
+    CFG *cfg;                 /**< the CFG where this block belongs */
+    vector<IRInstr *> instrs; /**< the instructions themselves */
+    string test_var_name;     /**< when generating IR code for an if(expr) or while(expr) etc, store here the name of the variable that holds the value of expr */
     bool isExit;
 };
 
@@ -281,7 +288,7 @@ public:
     string IR_reg_to_asm(string reg); /**< helper method: inputs an IR reg or input variable, returns e.g. "-24(%rbp)" for the proper value of 24 */
     void gen_asm_prologue(ostream &o);
     void gen_asm_epilogue(ostream &o);
-    //void genrateExitAsm(ostream&o);
+    // void genrateExitAsm(ostream&o);
     string create_return_var();
     string create_new_tempvar();
     int get_var_index(string name);
@@ -311,4 +318,5 @@ protected:
     vector<BasicBlock *> bbs;                /**< all the basic blocks of this CFG */
     BasicBlock *bb_Exit;
     int ExitBlockDefined;
+    
 };

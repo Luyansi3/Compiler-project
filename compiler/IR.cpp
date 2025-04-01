@@ -62,6 +62,9 @@ void IRInstrPrologue::gen_asm(ostream &o){
 
 // Generate assembly code for the function epilogue
 void IRInstrEpilogue::gen_asm(ostream &o){
+    string source = this->bb->cfg->IR_reg_to_asm("!returnVal");
+
+    o << "    movl " << source << ", %eax" << "\n";
     //Remettre rsp à son état initial
     int offset = -bb->cfg->getNextFreeSymbolIndex();
     offset += (16 - ((offset)%16));
@@ -314,6 +317,7 @@ CFG::CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4
 
     // Create a new basic block for the epilogue
     BasicBlock *bb_epilogue = new BasicBlock(this, getNameFunction() + "_epilogue");
+    create_return_var();
     bb_epilogue->add_IRInstr(new IRInstrEpilogue(bb_epilogue));
     add_bb(bb_epilogue);
     bb_body->exit_true = bb_epilogue;
@@ -333,7 +337,7 @@ string CFG::create_return_var()
 {
     nextFreeSymbolIndex -= 4;
     string returnVar = "!returnVal";
-    Flag flag = {nextFreeSymbolIndex, false, false};
+    FlagVar flag = {nextFreeSymbolIndex, false, false};
     symbolIndex.insert({returnVar, flag});
     return returnVar;
 }
