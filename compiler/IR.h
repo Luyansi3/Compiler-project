@@ -176,24 +176,26 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
-class IRInstrExit:public IRInstr
+class IRInstrExit : public IRInstr
 {
-private :
+private:
     string src;
+
 public:
-    IRInstrExit(BasicBlock*bb,string src):IRInstr(bb),src(src)
+    IRInstrExit(BasicBlock *bb, string src) : IRInstr(bb), src(src)
     {
     }
-    virtual void gen_asm(ostream&o)override;
+    virtual void gen_asm(ostream &o) override;
 };
 
-class IRInstrJump:public IRInstr
+class IRInstrJump : public IRInstr
 {
-    private :
+private:
     string label;
-    public:
-    IRInstrJump(BasicBlock*bb,string label):IRInstr(bb),label(label){}
-    virtual void gen_asm(ostream&o)override;
+
+public:
+    IRInstrJump(BasicBlock *bb, string label) : IRInstr(bb), label(label) {}
+    virtual void gen_asm(ostream &o) override;
 };
 /**  The class for a basic block */
 
