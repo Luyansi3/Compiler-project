@@ -404,6 +404,8 @@ antlrcpp::Any Linearize::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
     bb_body->exit_true = bb_test;
 
     cfg->current_bb = bb_test;
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
+
     // Visit the condition expression
     this->visit(ctx->expr());
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
