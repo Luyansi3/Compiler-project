@@ -245,7 +245,12 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     // Set the current basic block to the then part
     cfg->current_bb = bb_then;
     // Visit the then part
-    this->visit(ctx->block());
+    if (ctx->instruction()) {
+        this->visit(ctx->instruction());
+    }
+    else {
+        this->visit(ctx->block());
+    }
 
     // Set the current basic block to the endif
     cfg->current_bb = bb_init;
@@ -296,9 +301,14 @@ antlrcpp::Any Linearize::visitElif_stmt(ifccParser::Elif_stmtContext *ctx) {
     // Set the current basic block to the then part
     cfg->current_bb = bb_then;
     // Visit the then part
-    this->visit(ctx->block());
+    if (ctx->instruction()) {
+        this->visit(ctx->instruction());
+    }
+    else {
+        this->visit(ctx->block());
+    }
 
-    // Set the current basic block to the endif
+    // Set the current basic block to the initial block
     cfg->current_bb = bb_init;
 
     return 0;
@@ -316,7 +326,12 @@ antlrcpp::Any Linearize::visitElse_stmt(ifccParser::Else_stmtContext *ctx) {
     // Set the current basic block to the else part
     cfg->current_bb = bb_else;
     // Visit the else part
-    this->visit(ctx->block());
+    if (ctx->instruction()) {
+        this->visit(ctx->instruction());
+    }
+    else {
+        this->visit(ctx->block());
+    }
     cfg->current_bb = bb_init;
 
     return 0;
@@ -412,7 +427,12 @@ antlrcpp::Any Linearize::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
 
     cfg->current_bb = bb_body;
     // Visit the body of the while loop
-    this->visit(ctx->block());
+    if (ctx->instruction()) {
+        this->visit(ctx->instruction());
+    }
+    else {
+        this->visit(ctx->block());
+    }
 
     cfg->current_bb = bb_end;
 

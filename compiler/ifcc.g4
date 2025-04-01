@@ -20,13 +20,13 @@ declaration: type decl_element (COMMA decl_element)* ;
 decl_element: VAR
             | affectation ;
 
-if_stmt: IF OPENPAR expr CLOSEPAR block (elif_stmt)* (else_stmt)? ;
+if_stmt: IF OPENPAR expr CLOSEPAR (instruction | block) (elif_stmt)* (else_stmt)? ;
 
-elif_stmt: ELSE IF OPENPAR expr CLOSEPAR block ;
+elif_stmt: ELSE IF OPENPAR expr CLOSEPAR (instruction | block) ;
 
-else_stmt: ELSE block ;
+else_stmt: ELSE (instruction | block) ;
 
-while_stmt: WHILE OPENPAR expr CLOSEPAR block ;
+while_stmt: WHILE OPENPAR expr CLOSEPAR (instruction | block) ;
 
 affectation: lvalue EQUAL expr ;
 
