@@ -16,9 +16,9 @@ class CFG;
 // Class to visit and build the symbol table
 class SymbolTableVisitor : public ifccBaseVisitor {
     public:
-        unordered_map<string, FlagVar> symbolTableVar; // Symbol table to store variable information
+        unordered_map<string, FlagVar> symbolTableVar; // Symbol table to store variable information. Just temporary
         static unordered_map<string, FlagFonction> symbolTableFonction; //Symbol Table to store the function. It is static because common to all Symbol Table.
-        static vector<CFG*> cfg_liste;
+        static vector<CFG*> cfg_liste; // List of the CFG built
 
         // Constructor to initialize the base visitor and index
         SymbolTableVisitor(): ifccBaseVisitor(), index(-4) { }

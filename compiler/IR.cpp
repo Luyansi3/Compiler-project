@@ -21,8 +21,16 @@ void IRInstrNeg::gen_asm(ostream &o){
 
 // Generate assembly code for the function prologue
 void IRInstrPrologue::gen_asm(ostream &o){
+    //Prologue classqieu
     o<< "    pushq %rbp \n";
     o<< "    movq %rsp, %rbp\n";
+
+    //Allouer la mémoire
+    int offset = -bb->cfg->getNextFreeSymbolIndex();
+    offset += (16 - ((offset)%16));
+    o << "    subq $" << offset << ", " << "%rsp\n";
+
+    //Recuperation des 6 premiers params
     for (int i = 1; i <= bb->cfg->nbParams && i < 7; i++) {
         if (i==1)
             o << "    movl" << " " << "%edi" << ", " << -4*i <<"(%rbp)" <<"\n";
@@ -38,14 +46,25 @@ void IRInstrPrologue::gen_asm(ostream &o){
             o << "    movl" << " " << "%r9d" << ", " << -4*i <<"(%rbp)" <<"\n";
     }
     
+    //Recuperation sur la pile des autres params
+    for (int i = 7; i<= bb->cfg->nbParams ; i++) {
+        o << "    movl" << " " << 16+8*(i-7) << "(%rbp)" << ", " << "%eax" << "\n"; //A regler le probleme des offsets.
+        o << "    movl" << " " << "%eax" << ", " <<  -4*i << "(%rbp)" << "\n";
+    }
+        
 
-    for (int i = 7; i <= bb->cfg->nbParams; i++) 
-        o << "    movl" << " " << 8*(i-5) << "(%rbp)" << ", " << -4*i << "(%rbp)" << "\n";
+    
 
 }
 
 // Generate assembly code for the function epilogue
 void IRInstrEpilogue::gen_asm(ostream &o){
+    //Remettre rsp à son état initial
+    int offset = -bb->cfg->getNextFreeSymbolIndex();
+    offset += (16 - ((offset)%16));
+    o << "    addq $" << offset << ", " << "%rsp\n";
+
+
     o<< "    popq %rbp\n";
     o << "    ret\n";
 }
@@ -79,6 +98,12 @@ void IRInstrSub::gen_asm(ostream &o){
 }
 
 void IrInstrCall::gen_asm(ostream &o) {
+    bool non_aligned = params.size()>6 && params.size()%2;
+    int pushed = 0;
+
+
+
+
     for (int i = 0; i<6 && i<params.size(); i++) {
         string param = this->bb->cfg->IR_reg_to_asm(params[i]);
         if (i==0)
@@ -95,11 +120,23 @@ void IrInstrCall::gen_asm(ostream &o) {
             o << "    movl" << " " << param << ", " << "%r9d" <<"\n";
     }
 
-    for (int i = 6; i<params.size(); i++) {
+    for (int i = params.size()-1;i>=6; i--) {
+        pushed++;
         string param = this->bb->cfg->IR_reg_to_asm(params[i]);
         o << "    pushq" << " " << param << "\n";
     }
+
+    if (non_aligned)
+        o << "    subq $8, " << "%rsp\n";
+
+
     o << "    call" << " " << label << "\n";
+
+    if (non_aligned)
+        o << "    addq $" << 8*(pushed+1) <<", " << "%rsp\n";
+    else if (pushed)
+        o << "    addq $" << 8*pushed <<", " << "%rsp\n";
+    
 }
 
 // Generate assembly code for comparison

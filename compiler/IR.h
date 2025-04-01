@@ -270,6 +270,7 @@ public:
     string getNameFunction() { return nameFunction; }
     vector<BasicBlock*> getBbs() {return bbs;}
     unordered_map<string, FlagVar> &getSymbolIndex() {return symbolIndex;}
+    int getNextFreeSymbolIndex() {return nextFreeSymbolIndex;}
 
     string new_BB_name();
     BasicBlock *current_bb;

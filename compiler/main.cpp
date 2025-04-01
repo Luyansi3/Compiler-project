@@ -65,16 +65,7 @@ int main(int argn, const char **argv)
   table.visit(tree);
 
 
-  
-  // Check for unused variables
-  //  for (auto it=table.symbolTable.begin(); it != table.symbolTable.end(); ++it){
-  //    if (!it->second.used && it->second.nombreParams == -1)
-  //    {
-  //        cerr << "Var " << it->first << " n'est pas utilisé" <<endl;
-  //    }
-  //  }
-
-
+  //Vérif de declration et utilisation de toutes les fonctions
   for (auto it=SymbolTableVisitor::symbolTableFonction.begin(); it != SymbolTableVisitor::symbolTableFonction.end(); it++) {
     if (!it->second.declared) {
       cerr << "Fonction" << it->first << " n'est pas déclarée" << endl;
@@ -85,6 +76,7 @@ int main(int argn, const char **argv)
       
   }
 
+  //Vérfi d'utilisation des variables
   for (CFG *cfg : SymbolTableVisitor::cfg_liste) {
     for (auto it=cfg->getSymbolIndex().begin(); it != cfg->getSymbolIndex().end(); ++it){
       if (!it->second.used)
@@ -104,10 +96,6 @@ int main(int argn, const char **argv)
     cfg->gen_asm(cout);
     delete(cfg);
   }
-
-  
-
-  
 
 
   return 0;

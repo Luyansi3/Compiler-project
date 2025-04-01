@@ -3,7 +3,7 @@
 // Visit the program
 antlrcpp::Any Linearize::visitProg(ifccParser::ProgContext *ctx)
 {
-    // Visit the block of the program
+    // Visit the main block of the program
     this->visit(ctx->block());
 
 
