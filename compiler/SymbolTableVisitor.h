@@ -5,20 +5,20 @@ using namespace std;
 #include "generated/ifccBaseVisitor.h"
 #include <unordered_map>
 #include <string>
+#include "IR.h"
+#include "Flag.h"
 
-// Structure to hold information about a variable
-typedef struct Flag
-{
-    int index;
-    bool used;
-    bool affected;
-    int nombreParams;
-}Flag;
+
+class CFG;
+
+
 
 // Class to visit and build the symbol table
 class SymbolTableVisitor : public ifccBaseVisitor {
     public:
-        unordered_map<string, Flag> symbolTable; // Symbol table to store variable information
+        unordered_map<string, FlagVar> symbolTableVar; // Symbol table to store variable information. Just temporary
+        static unordered_map<string, FlagFonction> symbolTableFonction; //Symbol Table to store the function. It is static because common to all Symbol Table.
+        static vector<CFG*> cfg_liste; // List of the CFG built
 
         // Constructor to initialize the base visitor and index
         SymbolTableVisitor(): ifccBaseVisitor(), index(-4) { }
@@ -29,6 +29,8 @@ class SymbolTableVisitor : public ifccBaseVisitor {
         virtual antlrcpp::Any visitExprVar(ifccParser::ExprVarContext *ctx) override;
         virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override;
         virtual antlrcpp::Any visitCall(ifccParser::CallContext * ctx) override;
+        virtual antlrcpp::Any visitDecl_fonction(ifccParser::Decl_fonctionContext *ctx) override;
+        virtual antlrcpp::Any visitDecl_param(ifccParser::Decl_paramContext *ctx) override;
     private:
         int index; // Index to keep track of variable positions
 };

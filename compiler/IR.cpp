@@ -21,12 +21,50 @@ void IRInstrNeg::gen_asm(ostream &o){
 
 // Generate assembly code for the function prologue
 void IRInstrPrologue::gen_asm(ostream &o){
+    //Prologue classqieu
     o<< "    pushq %rbp \n";
     o<< "    movq %rsp, %rbp\n";
+
+    //Allouer la mémoire
+    int offset = -bb->cfg->getNextFreeSymbolIndex();
+    offset += (16 - ((offset)%16));
+    o << "    subq $" << offset << ", " << "%rsp\n";
+
+    //Recuperation des 6 premiers params
+    for (int i = 1; i <= bb->cfg->nbParams && i < 7; i++) {
+        if (i==1)
+            o << "    movl" << " " << "%edi" << ", " << -4*i <<"(%rbp)" <<"\n";
+        else if (i==2)
+            o << "    movl" << " " << "%esi" << ", " << -4*i <<"(%rbp)" <<"\n";
+        else if (i==3)
+            o << "    movl" << " " << "%edx" << ", " << -4*i <<"(%rbp)" <<"\n";
+        else if (i==4)
+            o << "    movl" << " " << "%ecx" << ", " << -4*i <<"(%rbp)" <<"\n";
+        else if (i==5)
+            o << "    movl" << " " << "%r8d" << ", " << -4*i <<"(%rbp)" <<"\n";
+        else if (i==6)
+            o << "    movl" << " " << "%r9d" << ", " << -4*i <<"(%rbp)" <<"\n";
+    }
+    
+    //Recuperation sur la pile des autres params
+    for (int i = 7; i<= bb->cfg->nbParams ; i++) {
+        o << "    movl" << " " << 16+8*(i-7) << "(%rbp)" << ", " << "%eax" << "\n"; //A regler le probleme des offsets.
+        o << "    movl" << " " << "%eax" << ", " <<  -4*i << "(%rbp)" << "\n";
+    }
+        
+
+    
+
 }
 
 // Generate assembly code for the function epilogue
 void IRInstrEpilogue::gen_asm(ostream &o){
+    //Remettre rsp à son état initial
+    int offset = -bb->cfg->getNextFreeSymbolIndex();
+    offset += (16 - ((offset)%16));
+    o << "    addq $" << offset << ", " << "%rsp\n";
+
+
     o<< "    popq %rbp\n";
     o << "    ret\n";
 }
@@ -60,6 +98,12 @@ void IRInstrSub::gen_asm(ostream &o){
 }
 
 void IrInstrCall::gen_asm(ostream &o) {
+    bool non_aligned = params.size()>6 && params.size()%2;
+    int pushed = 0;
+
+
+
+
     for (int i = 0; i<6 && i<params.size(); i++) {
         string param = this->bb->cfg->IR_reg_to_asm(params[i]);
         if (i==0)
@@ -76,11 +120,23 @@ void IrInstrCall::gen_asm(ostream &o) {
             o << "    movl" << " " << param << ", " << "%r9d" <<"\n";
     }
 
-    for (int i = params.size() - 1; i>5; i++) {
+    for (int i = params.size()-1;i>=6; i--) {
+        pushed++;
         string param = this->bb->cfg->IR_reg_to_asm(params[i]);
         o << "    pushq" << " " << param << "\n";
     }
+
+    if (non_aligned)
+        o << "    subq $8, " << "%rsp\n";
+
+
     o << "    call" << " " << label << "\n";
+
+    if (non_aligned)
+        o << "    addq $" << 8*(pushed+1) <<", " << "%rsp\n";
+    else if (pushed)
+        o << "    addq $" << 8*pushed <<", " << "%rsp\n";
+    
 }
 
 // Generate assembly code for comparison
@@ -178,7 +234,7 @@ void CFG::gen_asm(ostream &o){
 // Generate a new basic block name
 string CFG::new_BB_name(){
     nextBBnumber++;
-    return "BB"+ to_string(nextBBnumber);
+    return "BB"+ to_string(nextBBnumber)+"_"+nameFunction;
 }
 
 // Generate assembly code for the function prologue
@@ -199,14 +255,14 @@ void CFG::gen_asm_epilogue(ostream &o){
 string CFG::create_new_tempvar(){
     nextFreeSymbolIndex -= 4;
     string tmpVar = "!tmp" + to_string(abs(nextFreeSymbolIndex));
-    Flag flag = {nextFreeSymbolIndex, false, false};
+    FlagVar flag = {nextFreeSymbolIndex, false, false};
     symbolIndex.insert({tmpVar, flag});
     return tmpVar;
 }
 
 // Constructor for CFG
-CFG::CFG(unordered_map<string, Flag>& symbolIndex, string nameFunction)
-    : symbolIndex(symbolIndex), nextBBnumber(0), nameFunction(nameFunction), nextFreeSymbolIndex(symbolIndex.size() * -4)
+CFG::CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4::tree::ParseTree* tree, int nbParams)
+    : symbolIndex(symbolIndex), nextBBnumber(0), nameFunction(nameFunction), nextFreeSymbolIndex(symbolIndex.size() * -4), tree(tree), nbParams(nbParams)
 {
     BasicBlock *bb_prologue = new BasicBlock(this, nameFunction);
     bb_prologue->add_IRInstr(new IRInstrPrologue(bb_prologue));
