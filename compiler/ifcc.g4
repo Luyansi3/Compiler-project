@@ -7,12 +7,13 @@ block: OPENCROCHET instructions CLOSECROCHET ;
 
 instructions: (instruction)* ;
 
-instruction: return_stmt  SEMI
-            | declaration  SEMI 
-            | expr  SEMI
-            | call SEMI
-            | if_stmt
-            | while_stmt
+instruction: return_stmt  SEMI      #InstrReturn
+            | declaration  SEMI     #InstrDecl
+            | expr  SEMI            #InstrExpr
+            | call SEMI             #InstrCall
+            | if_stmt               #InstrIf_stmt
+            | while_stmt            #InstrWhile_stmt
+            | block                 #InstrBlock
             ;
 
 decl_fonction: type VAR OPENPAR decl_params CLOSEPAR block ;
