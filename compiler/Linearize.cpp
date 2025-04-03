@@ -1,11 +1,62 @@
 #include "Linearize.h"
 
-// Visit the program
-antlrcpp::Any Linearize::visitProg(ifccParser::ProgContext *ctx)
+
+
+Linearize::Linearize(CFG* cfg): cfg(cfg){
+    scopeString = cfg->getNameFunction();
+    nameCurrentFunction = cfg->getNameFunction();
+}
+
+
+antlrcpp::Any Linearize::visitBlock(ifccParser::BlockContext *ctx) {
+
+    // Same work as with symbolTable, we want to know in which scope we are
+    if(scope.find(scopeString) == scope.end()){
+        scope.insert({scopeString, 0});
+    }
+
+    scope[scopeString]++;
+    scopeString += "_"+to_string(scope[scopeString]);
+
+    this->visit(ctx->instructions());
+
+
+    size_t pos = scopeString.find_last_of('_');
+    
+    scope.erase(scopeString);
+
+    if (pos != string::npos) {
+        scopeString.erase(pos);
+    }
+
+
+    return 0;
+
+}
+
+
+antlrcpp::Any Linearize::visitInstrBlock(ifccParser::InstrBlockContext *ctx)
 {
-    // Visit the main block of the program
+    BasicBlock *bb_init = cfg->current_bb;
+    BasicBlock *bb_simple = new BasicBlock(cfg, cfg->new_BB_name() + "_simple");
+    BasicBlock *bb_next = new BasicBlock(cfg, cfg->current_bb->label + "_next");
+
+    bb_simple->exit_true = bb_next;
+
+    bb_next->exit_true = cfg->current_bb->exit_true;
+    bb_next->exit_false =cfg->current_bb->exit_false;
+
+    cfg->current_bb->exit_true = bb_simple;
+    
+
+
+    cfg->current_bb = bb_simple;
+    cfg->add_bb(bb_simple);
+    cfg->add_bb(bb_next);
+
     this->visit(ctx->block());
 
+    cfg->current_bb = bb_next;
 
     return 0;
 }
@@ -48,9 +99,23 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
 antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx)
 {
     string varName = ctx->VAR()->getText();
-    
+
+    string var = varName + "!"+scopeString;
+
+    size_t pos_bang = var.find_last_of('!');
+    size_t pos_ = var.find_last_of('_');
+    // We are searching the right variables with the right scopes (shadowing if necessary)
+    while (pos_ > pos_bang && pos_ != string::npos)
+    {
+        if(cfg->getSymbolIndex().find(var) !=cfg->getSymbolIndex().end()) break;
+        pos_ = var.find_last_of('_');
+        if (pos_ != string::npos) {
+            var.erase(pos_);
+        }   
+    }
+
     // Add a copy instruction to load the variable into a register
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", var));
 
     return 0;
 }
@@ -88,12 +153,23 @@ antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx)
 // Visit a left-hand side value
 antlrcpp::Any Linearize::visitLvalue(ifccParser::LvalueContext *ctx)
 {
-    if (ctx->VAR())
+
+    string varName = ctx->VAR()->getText();
+    string var = varName + "!"+scopeString;
+
+    size_t pos_bang = var.find_last_of('!');
+    size_t pos_ = var.find_last_of('_');
+    while (pos_ > pos_bang && pos_ != string::npos)
     {
-        string varName = ctx->VAR()->getText();
-        // Add a copy instruction to store the register value into the variable
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
+        if(cfg->getSymbolIndex().find(var) !=cfg->getSymbolIndex().end()) break;
+        pos_ = var.find_last_of('_');
+        if (pos_ != string::npos) {
+            var.erase(pos_);
+        }       
     }
+    // Add a copy instruction to store the register value into the variable
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, var, "!reg"));
+
     return 0;   
 }
 
@@ -263,7 +339,7 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
         this->visit(ctx->block());
     }
 
-    // Set the current basic block to the endif
+    // Set the current basic block to the init bb
     cfg->current_bb = bb_init;
 
     ifccParser::Elif_stmtContext* elif = ctx->elif_stmt(0);

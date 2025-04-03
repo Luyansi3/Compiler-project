@@ -281,7 +281,7 @@ void CFG::gen_asm(ostream &o)
 string CFG::new_BB_name()
 {
     nextBBnumber++;
-    return "BB"+ to_string(nextBBnumber)+"_"+nameFunction;
+    return nameFunction + "_BB"+ to_string(nextBBnumber);
 }
 
 // Generate assembly code for the function prologue
@@ -305,7 +305,7 @@ string CFG::create_new_tempvar()
 {
     nextFreeSymbolIndex -= 4;
     string tmpVar = "!tmp" + to_string(abs(nextFreeSymbolIndex));
-    FlagVar flag = {nextFreeSymbolIndex, false, false};
+    FlagVar flag = {nextFreeSymbolIndex, false, false, nameFunction, tmpVar};
     symbolIndex.insert({tmpVar, flag});
     return tmpVar;
 }

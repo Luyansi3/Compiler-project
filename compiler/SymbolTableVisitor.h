@@ -19,11 +19,16 @@ class SymbolTableVisitor : public ifccBaseVisitor {
         unordered_map<string, FlagVar> symbolTableVar; // Symbol table to store variable information. Just temporary
         static unordered_map<string, FlagFonction> symbolTableFonction; //Symbol Table to store the function. It is static because common to all Symbol Table.
         static vector<CFG*> cfg_liste; // List of the CFG built
+        string scopeString; // Store the current scope of where we are
+        string nameCurrentFunction;
+        unordered_map<string, int> scope; // store a counter of blocks for a certain depth
+
 
         // Constructor to initialize the base visitor and index
-        SymbolTableVisitor(): ifccBaseVisitor(), index(-4) { }
+        SymbolTableVisitor(): ifccBaseVisitor(), index(-4), scopeString("") { }
 
         // Override methods to visit different parts of the parse tree
+        virtual antlrcpp::Any visitBlock(ifccParser::BlockContext *ctx) override;
         virtual antlrcpp::Any visitDecl_element(ifccParser::Decl_elementContext *ctx) override;
         virtual antlrcpp::Any visitAffectation(ifccParser::AffectationContext *ctx) override;
         virtual antlrcpp::Any visitExprVar(ifccParser::ExprVarContext *ctx) override;
