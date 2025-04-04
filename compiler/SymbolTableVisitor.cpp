@@ -63,46 +63,88 @@ antlrcpp::Any SymbolTableVisitor::visitProg(ifccParser::ProgContext *ctx) {
 }
 
 // Visit the declaration of the elements 
-antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementContext *ctx) 
+antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementContext *ctx)
 {
-    string varName;
-    if(ctx->affectation()){
-        varName = ctx->affectation()->lvalue()->VAR()->getText();
-    }
-    else{
-        varName = ctx->VAR()->getText();
-    }
-    FlagVar flagVar;
-
-    flagVar.index = index;
-    flagVar.affected = false;
-    flagVar.used = false;
-    flagVar.functionName = nameCurrentFunction;
-    flagVar.varName = varName;
-    index -= 4;
-    string var = varName + "!"+scopeString; // create the right format for the variable to store it in the table
-                                            // like this each variable+scope is unique
-
-    if(symbolTableVar.find(var) == symbolTableVar.end()){
-        symbolTableVar.insert({var, flagVar});
-    }
-    else{        
-        cerr<< "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
-        exit(1);
-    }
-
-    if (ctx->affectation())
+    if (ctx->affectation() && dynamic_cast<ifccParser::LvalueAffectationContext *>(ctx->affectation()))
     {
+
+        auto affect = dynamic_cast<ifccParser::LvalueAffectationContext *>(ctx->affectation());
+        string varName = affect->lvalue()->VAR()->getText();
+        FlagVar flagVar;
+
+        flagVar.index = index;
+        flagVar.affected = false;
+        flagVar.used = false;
+        flagVar.functionName = nameCurrentFunction;
+        flagVar.varName = varName;
+        index -= 4;
+        string var = varName + "!"+scopeString; // create the right format for the variable to store it in the table
+                                                // like this each variable+scope is unique
+
+        if(symbolTableVar.find(var) == symbolTableVar.end()){
+            symbolTableVar.insert({var, flagVar});
+        }
+        else{        
+            cerr<< "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
+            exit(1);
+        }
+    }
+    else if (ctx->affectation() && dynamic_cast<ifccParser::TableAffectationContext *>(ctx->affectation()))
+    {
+        auto affect = dynamic_cast<ifccParser::TableAffectationContext *>(ctx->affectation());
+        string varName = affect->VAR()->getText();
+        int tableSize = stoi(affect->constante()->getText());
+        // Iterate in reverse so that element 0 is allocated last, receiving the smallest index.
+
+        FlagVar flagVar;
+
+        flagVar.index = index;
+        flagVar.affected = false;
+        flagVar.used = false;
+        flagVar.functionName = nameCurrentFunction;
+        flagVar.varName = varName;
+        index -= 4;
+        string var = varName + "!"+scopeString; // create the right format for the variable to store it in the table
+                                                // like this each variable+scope is unique
+
+        if(symbolTableVar.find(var) == symbolTableVar.end()){
+            symbolTableVar.insert({var, flagVar});
+        }
+        else{        
+            cerr<< "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
+            exit(1);
+        }
+
         this->visit(ctx->affectation());
     }
-    
-    
+    else
+    {
+        string varName = ctx->VAR()->getText();
+        FlagVar flagVar;
+
+        flagVar.index = index;
+        flagVar.affected = false;
+        flagVar.used = false;
+        flagVar.functionName = nameCurrentFunction;
+        flagVar.varName = varName;
+        index -= 4;
+        string var = varName + "!"+scopeString; // create the right format for the variable to store it in the table
+                                                // like this each variable+scope is unique
+
+        if(symbolTableVar.find(var) == symbolTableVar.end()){
+            symbolTableVar.insert({var, flagVar});
+        }
+        else{        
+            cerr<< "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
+            exit(1);
+        }
+    }
+
     return 0;
 }
 
-
-//Visit the affectation
-antlrcpp::Any SymbolTableVisitor::visitAffectation(ifccParser::AffectationContext *ctx){
+antlrcpp::Any SymbolTableVisitor::visitLvalueAffectation(ifccParser::LvalueAffectationContext *ctx)
+{
     string varName = ctx->lvalue()->VAR()->getText();
     string var = varName + "!"+scopeString;
     bool find = false;
@@ -138,7 +180,37 @@ antlrcpp::Any SymbolTableVisitor::visitAffectation(ifccParser::AffectationContex
     return 0;
 }
 
-antlrcpp::Any SymbolTableVisitor::visitExprVar(ifccParser::ExprVarContext *ctx){
+antlrcpp::Any SymbolTableVisitor::visitTableAffectation(ifccParser::TableAffectationContext *ctx)
+{
+    string varName = ctx->VAR()->getText();
+    if (symbolTableVar.find(varName) == symbolTableVar.end())
+    {
+        cerr << "Variable " << ctx->VAR()->getText() << " non déclarée" << endl;
+        exit(1);
+    }
+    else
+    {
+        int exprListSize = (ctx->array_litteral()->expr()).size();
+        int constante = stoi(ctx->constante()->getText());
+
+        for (int i = 0; i < min(constante, exprListSize); i++)
+        symbolTableVar[ctx->VAR()->getText()].affected = true;
+    }
+    this->visit(ctx->array_litteral());
+    return 0;
+}
+
+antlrcpp::Any SymbolTableVisitor::visitArray_litteral(ifccParser::Array_litteralContext *ctx)
+{
+    for (auto &expression : ctx->expr())
+    {
+        this->visit(expression);
+    }
+    return 0;
+}
+
+antlrcpp::Any SymbolTableVisitor::visitExprVar(ifccParser::ExprVarContext *ctx)
+{
 
     string varName = ctx->VAR()->getText();
     bool find = false;  
@@ -271,5 +343,4 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_param(ifccParser::Decl_paramContext 
 
     return 0;
 }
-
 
