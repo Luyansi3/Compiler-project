@@ -256,6 +256,16 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+class IRInstrNot : public IRInstr
+{
+private:
+    string src;
+
+public:
+    IRInstrNot(BasicBlock *bb, string src) : IRInstr(bb), src(src) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
 /** The class for a basic block */
 class BasicBlock
 {

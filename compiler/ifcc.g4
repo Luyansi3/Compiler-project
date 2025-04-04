@@ -66,7 +66,7 @@ call: VAR OPENPAR liste_param CLOSEPAR ;
 compRelationnal: INF | SUP ;
 compEqual: EQ | NEQ ;
 
-opU: MINUS ;
+opU: MINUS | NOT;
 
 opA: PLUS | MINUS ;
 opM: DIV | MULT ;
@@ -100,6 +100,7 @@ SEMI          : ';';
 EQUAL         : '=';
 PLUS          : '+';
 MINUS         : '-';
+NOT           : '!';
 MULT          : '*';
 DIV           : '/';
 COMMA         : ',';

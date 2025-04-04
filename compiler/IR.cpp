@@ -203,6 +203,14 @@ void IRInstrJump::gen_asm(ostream &o)
     o << "    jmp " << label << "\n";
 }
 
+void IRInstrNot::gen_asm(ostream &o)
+{
+    string d = bb->cfg->IR_reg_to_asm(src);
+    o << "    cmpl $0, " << d << "\n";
+    o << "    sete %al" << "\n";
+    o << "    movsbl %al, %eax" << "\n";
+}
+
 // Generate assembly code for a basic block and its instructions
 void BasicBlock::gen_asm(ostream &o)
 {
