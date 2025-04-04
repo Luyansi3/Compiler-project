@@ -99,7 +99,8 @@ void IrInstrCall::gen_asm(ostream &o)
 }
 
 // Generate assembly code for comparison
-void IRInstrCmpEQ::gen_asm(ostream &o){
+void IRInstrCmpEQ::gen_asm(ostream &o)
+{
     string source1 = this->bb->cfg->IR_reg_to_asm(src1);
     string source2 = this->bb->cfg->IR_reg_to_asm(src2);
     o << "    cmpl " << source1 << ", " << source2 << "\n";
@@ -108,7 +109,8 @@ void IRInstrCmpEQ::gen_asm(ostream &o){
 }
 
 // Generate assembly code for non equal comparison
-void IRInstrCmpNEQ::gen_asm(ostream &o){
+void IRInstrCmpNEQ::gen_asm(ostream &o)
+{
     string source1 = this->bb->cfg->IR_reg_to_asm(src1);
     string source2 = this->bb->cfg->IR_reg_to_asm(src2);
     o << "    cmpl " << source1 << ", " << source2 << "\n";
@@ -117,7 +119,8 @@ void IRInstrCmpNEQ::gen_asm(ostream &o){
 }
 
 // Generate assembly code for less than comparison
-void IRInstrCmpINF::gen_asm(ostream &o){
+void IRInstrCmpINF::gen_asm(ostream &o)
+{
     string source1 = this->bb->cfg->IR_reg_to_asm(src1);
     string source2 = this->bb->cfg->IR_reg_to_asm(src2);
     o << "    cmpl " << source1 << ", " << source2 << "\n";
@@ -126,7 +129,8 @@ void IRInstrCmpINF::gen_asm(ostream &o){
 }
 
 // Generate assembly code for greater than comparison
-void IRInstrCmpSUP::gen_asm(ostream &o){
+void IRInstrCmpSUP::gen_asm(ostream &o)
+{
     string source1 = this->bb->cfg->IR_reg_to_asm(src1);
     string source2 = this->bb->cfg->IR_reg_to_asm(src2);
     o << "    cmpl " << source1 << ", " << source2 << "\n";
@@ -151,7 +155,69 @@ void IRInstrJump::gen_asm(ostream &o)
 {
     o << "    jmp " << label << "\n";
 }
+void IRInstrMem::gen_asm(ostream &o)
+{
+    string srcReg = bb->cfg->IR_reg_to_asm(src);     // Valeur à stocker
+    string indexReg = bb->cfg->IR_reg_to_asm(index); // Index (normalement !reg = %eax)
+    string baseStr = bb->cfg->IR_reg_to_asm(base);   // Base (ex: -64(%rbp))
+    int displacement = 0;
+    string baseReg;
+    size_t pos = baseStr.find('(');
+    if (pos != string::npos)
+    {
+        try
+        {
+            displacement = stoi(baseStr.substr(0, pos));
+        }
+        catch (...)
+        {
+            displacement = 0;
+        }
+        baseReg = baseStr.substr(pos);
+    }
+    else
+    {
+        baseReg = baseStr;
+    }
+    o << "push %rax\n";
+    o << "movl " << srcReg << ", %eax\n";
+    o << "pop %rcx\n";
+    o << "movl %eax, " << displacement << baseReg.substr(0, baseReg.size() - 1) << "," << "%rcx,4)\n";
+}
+void IRInstrCopyMem::gen_asm(ostream &o)
+{
+    string destReg = bb->cfg->IR_reg_to_asm(src);    // Destination dans !reg = %eax
+    string indexReg = bb->cfg->IR_reg_to_asm(index); // Index (normalement !reg = %eax)
+    string baseStr = bb->cfg->IR_reg_to_asm(base);   // Base (ex: -64(%rbp))
 
+    int displacement = 0;
+    string baseReg;
+    size_t pos = baseStr.find('(');
+    if (pos != string::npos)
+    {
+        try
+        {
+            displacement = stoi(baseStr.substr(0, pos));
+        }
+        catch (...)
+        {
+            displacement = 0;
+        }
+        baseReg = baseStr.substr(pos); // Ex: "(%rbp)"
+    }
+    else
+    {
+        baseReg = baseStr;
+    }
+
+    // 🔥 même principe qu'avant : sauvegarder l'index, puis faire l'accès mémoire
+    o << "push %rax\n";                    // Sauver l'index
+    o << "movl " << destReg << ", %eax\n"; // Charger l'index dans %eax (si besoin... ici à corriger peut-être selon usage)
+    o << "pop %rcx\n";                     // Restaurer l'index dans %rcx
+
+    // 🚀 Maintenant, lire a[i] dans %eax
+    o << "movl " << displacement << baseReg.substr(0, baseReg.size() - 1) << "," << "%rcx,4), %eax\n";
+}
 // Generate assembly code for a basic block and its instructions
 void BasicBlock::gen_asm(ostream &o)
 {
@@ -161,15 +227,16 @@ void BasicBlock::gen_asm(ostream &o)
         instr->gen_asm(o);
     }
 
-    if (exit_true != nullptr && exit_false != nullptr) {
+    if (exit_true != nullptr && exit_false != nullptr)
+    {
         string eval = this->cfg->IR_reg_to_asm(test_var_name);
         o << "    cmpl $0, " << eval << "\n";
         o << "    je " << exit_false->label << "\n";
         o << "    jmp " << exit_true->label << "\n";
     }
-    else if (exit_true != nullptr) {
+    else if (exit_true != nullptr)
+    {
         o << "    jmp " << exit_true->label << "\n";
-        
     }
 }
 

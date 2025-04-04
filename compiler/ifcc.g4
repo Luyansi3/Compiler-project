@@ -17,7 +17,7 @@ instruction: return_stmt  SEMI
 
 declaration: type decl_element (COMMA decl_element)* ;
 
-decl_element: VAR
+decl_element: VAR (OPENBRACKET expr CLOSEBRACKET)*
             | affectation ;
 
 if_stmt: IF OPENPAR expr CLOSEPAR block (elif_stmt)* (else_stmt)? ;
@@ -28,11 +28,14 @@ else_stmt: ELSE block ;
 
 while_stmt: WHILE OPENPAR expr CLOSEPAR block ;
 
-affectation: lvalue EQUAL expr ;
+affectation: lvalue EQUAL expr                                             #LvalueAffectation
+           | VAR OPENBRACKET constante CLOSEBRACKET EQUAL  array_litteral   #TableAffectation
+           | VAR OPENBRACKET expr CLOSEBRACKET EQUAL expr                   #TableElementAffectation;
 
+array_litteral : OPENCROCHET (expr (COMMA expr)* | ) CLOSECROCHET;
 return_stmt: RETURN expr ;
 
-lvalue: VAR ;
+lvalue: VAR ((OPENBRACKET expr CLOSEBRACKET )| ) ;
 
 expr: OPENPAR expr CLOSEPAR #ExprPar
     | opU expr              #ExprUnary
@@ -45,7 +48,8 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | affectation           #ExprAffectation 
     | call                  #ExprCall   
     | VAR                   #ExprVar
-    | constante             #ExprConst ;
+    | constante             #ExprConst 
+    | VAR OPENBRACKET expr CLOSEBRACKET #ExprTable;
 
 
 liste_param: expr (COMMA expr)*
@@ -88,6 +92,10 @@ OPENPAR       : '(';
 CLOSEPAR      : ')';
 OPENCROCHET   : '{';
 CLOSECROCHET  : '}';
+
+OPENBRACKET   : '[';
+CLOSEBRACKET  : ']';
+
 SEMI          : ';';
 EQUAL         : '=';
 PLUS          : '+';
