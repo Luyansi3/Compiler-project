@@ -63,6 +63,10 @@ antlrcpp::Any Linearize::visitExprUnary(ifccParser::ExprUnaryContext *ctx)
         cfg->current_bb->add_IRInstr(new IRInstrNeg(cfg->current_bb, "!reg"));
     }
 
+    else if(ctx->opU()->NOT()){
+        cfg->current_bb->add_IRInstr(new IRInstrNot(cfg->current_bb, "!reg"));
+    }
+
     return 0;
 }
 
