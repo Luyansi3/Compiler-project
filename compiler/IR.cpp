@@ -226,7 +226,7 @@ void BasicBlock::gen_asm(ostream &o)
         o << "    je " << exit_false->label << "\n";
         o << "    jmp " << exit_true->label << "\n";
     }
-    else if (exit_true != nullptr) {
+    else if (exit_true != nullptr and exit_true != this->cfg->bb_epi) {
         o << "    jmp " << exit_true->label << "\n";
         
     }
