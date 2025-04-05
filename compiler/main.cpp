@@ -81,7 +81,7 @@ int main(int argn, const char **argv)
     for (auto it=cfg->getSymbolIndex().begin(); it != cfg->getSymbolIndex().end(); ++it){
       if (!it->second.used)
       {
-          cerr << "Var " << it->first << " n'est jamais utilisé" <<endl;
+          cerr << "Var " << it->second.varName << " dans " << it->second.functionName << " n'est jamais utilisé" <<endl;
       }
     }
   }

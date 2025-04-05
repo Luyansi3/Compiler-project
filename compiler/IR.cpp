@@ -281,7 +281,7 @@ void CFG::gen_asm(ostream &o)
 string CFG::new_BB_name()
 {
     nextBBnumber++;
-    return "BB"+ to_string(nextBBnumber)+"_"+nameFunction;
+    return nameFunction + "_BB"+ to_string(nextBBnumber);
 }
 
 // Generate assembly code for the function prologue
@@ -305,7 +305,7 @@ string CFG::create_new_tempvar()
 {
     nextFreeSymbolIndex -= 4;
     string tmpVar = "!tmp" + to_string(abs(nextFreeSymbolIndex));
-    FlagVar flag = {nextFreeSymbolIndex, false, false};
+    FlagVar flag = {nextFreeSymbolIndex, false, false, nameFunction, tmpVar};
     symbolIndex.insert({tmpVar, flag});
     return tmpVar;
 }
@@ -348,4 +348,22 @@ string CFG::create_return_var()
     FlagVar flag = {nextFreeSymbolIndex, false, false};
     symbolIndex.insert({returnVar, flag});
     return returnVar;
+}
+// Get the variable index from the symbol table
+string CFG::getVarName(string name, string scopeString){
+    string var = name + "!"+scopeString;
+
+    size_t pos_bang = var.find_last_of('!');
+    size_t pos_ = var.find_last_of('_');
+    // We are searching the right variables with the right scopes (shadowing if necessary)
+    while (pos_ > pos_bang && pos_ != string::npos)
+    {
+        if(this->getSymbolIndex().find(var) !=this->getSymbolIndex().end()) break;
+        pos_ = var.find_last_of('_');
+        if (pos_ != string::npos) {
+            var.erase(pos_);
+        }   
+    }
+
+    return var;
 }

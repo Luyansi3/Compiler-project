@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 // Structure to hold information about a variable
 typedef struct FlagVar
@@ -6,6 +7,8 @@ typedef struct FlagVar
     int index;
     bool used;
     bool affected;
+    std::string functionName; // store the name of the function where the variable is used
+    std::string varName; // store the original name of the variable
 }FlagVar;
 
 

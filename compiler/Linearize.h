@@ -10,16 +10,20 @@ class Linearize : public ifccBaseVisitor
 {
 private:
     CFG* cfg; // Control Flow Graph (CFG) pointer
-    
+    string scopeString; // Same use as SymbolTableVar
+    string nameCurrentFunction;
+    unordered_map<string, int> scope;
+
 public:
     // Constructor to initialize the CFG pointer
-    Linearize(CFG* cfg): cfg(cfg) {}
+    Linearize(CFG* cfg);
 
     // Destructor
     ~Linearize() { }
 
     // Override methods to visit different parts of the parse tree
-    virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override;
+    virtual antlrcpp::Any visitBlock(ifccParser::BlockContext *ctx) override;
+    virtual antlrcpp::Any visitInstrBlock(ifccParser::InstrBlockContext *ctx) override;
     virtual antlrcpp::Any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
     virtual antlrcpp::Any visitAffectation(ifccParser::AffectationContext *ctx) override;
     virtual antlrcpp::Any visitExprVar(ifccParser::ExprVarContext *ctx) override;
