@@ -86,6 +86,11 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
                 }
             }
         }
+        if (ctx->affectation_composee()->op_compose()->MOINSEQUAL()) {
+            // Visit the expression and the left-hand side of the assignment
+            this->visit(ctx->affectation_composee()->expr());
+            cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, "!reg", varName));
+        }
     }
 
     return 0;

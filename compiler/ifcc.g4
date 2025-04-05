@@ -122,6 +122,7 @@ CLOSEBRACKET  : ']';
 SEMI          : ';';
 EQUAL         : '=';
 PLUSEQUAL     : '+=';
+MOINSEQUAL    : '-=';
 PLUS          : '+';
 MINUS         : '-';
 MOD           : '%';
