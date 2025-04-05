@@ -1,23 +1,3 @@
-int func(int x, int x){
-
-    int y=42;
-    int z='a';
-    if (z == 45)
-    {
-
-    }
-    else if (x ==45)
-    {
-        /* code */
-    }
-    
-    {
-
-    }
-
-
-}
-
 int main() {
 
     int x;
@@ -52,5 +32,6 @@ int main() {
     
     putchar(z+1);
     
+    return x;
 
 }
