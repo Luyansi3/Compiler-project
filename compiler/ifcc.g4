@@ -106,6 +106,7 @@ CLOSECROCHET  : '}';
 SEMI          : ';';
 EQUAL         : '=';
 PLUSEQUAL     : '+=';
+MOINSEQUAL    : '-=';
 PLUS          : '+';
 MINUS         : '-';
 NOT           : '!';
