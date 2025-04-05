@@ -57,6 +57,12 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
             this->visit(ctx->affectation_composee()->expr());
             cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, "!reg", varName));
         }
+        if (ctx->affectation_composee()->op_compose()->MULTEQUAL()) {
+            // Visit the expression and the left-hand side of the assignment
+            this->visit(ctx->affectation_composee()->expr());
+            cfg->current_bb->add_IRInstr(new IRInstrMul(cfg->current_bb, varName, "!reg"));
+            this->visit(ctx->affectation_composee()->lvalue()); 
+        }
     }
 
     return 0;

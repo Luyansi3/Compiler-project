@@ -43,7 +43,7 @@ affectation_simple: lvalue EQUAL expr;
 
 affectation_composee : lvalue op_compose expr;
 
-op_compose: PLUSEQUAL | MOINSEQUAL;
+op_compose: PLUSEQUAL | MOINSEQUAL | MULTEQUAL;
 
 return_stmt: RETURN expr ;
 
@@ -107,6 +107,7 @@ SEMI          : ';';
 EQUAL         : '=';
 PLUSEQUAL     : '+=';
 MOINSEQUAL    : '-=';
+MULTEQUAL    : '*=';
 PLUS          : '+';
 MINUS         : '-';
 NOT           : '!';
