@@ -535,5 +535,18 @@ antlrcpp::Any Linearize::visitExprPrefixe(ifccParser::ExprPrefixeContext *ctx) {
         this->visit(ctx->lvalue());
     }
 
+    else if (ctx->opD()->MOINSMOINS()) {
+        string tmp = cfg->create_new_tempvar();
+        // Add a copy instruction to store the result in a temporary variable
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp, 1));
+
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+
+        // Add a subtraction instruction
+        cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, tmp, "!reg"));
+
+        this->visit(ctx->lvalue());
+    }
+
     return 0;
 }
