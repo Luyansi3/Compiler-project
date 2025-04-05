@@ -96,7 +96,7 @@ void IRInstrAdd::gen_asm(ostream &o)
 {
     string source1 = this->bb->cfg->IR_reg_to_asm(src1);
     string source2 = this->bb->cfg->IR_reg_to_asm(src2);
-    o << "   addl " << source1 << ", " << source2 << "\n"; // add source, destination  # destination = destination + source
+    o << "    addl " << source1 << ", " << source2 << "\n"; // add source, destination  # destination = destination + source
 }
 
 // Generate assembly code for subtraction
@@ -104,7 +104,7 @@ void IRInstrSub::gen_asm(ostream &o)
 {
     string source1 = this->bb->cfg->IR_reg_to_asm(src1);
     string source2 = this->bb->cfg->IR_reg_to_asm(src2);
-    o << "   subl " << source1 << ", " << source2 << "\n";
+    o << "    subl " << source1 << ", " << source2 << "\n";
 }
 
 void IrInstrCall::gen_asm(ostream &o) {

@@ -50,18 +50,20 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
         if (ctx->affectation_composee()->op_compose()->PLUSEQUAL()) {
             // Visit the expression and the left-hand side of the assignment
             this->visit(ctx->affectation_composee()->expr());
-            cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, "!reg", varName));
+            cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, varName, "!reg"));
         }
         if (ctx->affectation_composee()->op_compose()->MOINSEQUAL()) {
             // Visit the expression and the left-hand side of the assignment
             this->visit(ctx->affectation_composee()->expr());
-            cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, "!reg", varName));
+            string tmp = cfg->create_new_tempvar();
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+            cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, tmp, "!reg"));
         }
         if (ctx->affectation_composee()->op_compose()->MULTEQUAL()) {
             // Visit the expression and the left-hand side of the assignment
             this->visit(ctx->affectation_composee()->expr());
             cfg->current_bb->add_IRInstr(new IRInstrMul(cfg->current_bb, varName, "!reg"));
-            this->visit(ctx->affectation_composee()->lvalue()); 
         }
         if (ctx->affectation_composee()->op_compose()->DIVEQUAL()) {
             // Visit the expression and the left-hand side of the assignment
@@ -70,8 +72,8 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
             cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
             cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
             cfg->current_bb->add_IRInstr(new IRInstrDiv(cfg->current_bb, tmp));
-            this->visit(ctx->affectation_composee()->lvalue()); 
         }
+        this->visit(ctx->affectation_composee()->lvalue());
     }
 
     return 0;
