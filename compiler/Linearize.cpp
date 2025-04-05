@@ -494,7 +494,23 @@ antlrcpp::Any Linearize::visitExprSuffixe(ifccParser::ExprSuffixeContext *ctx)
     }
     else if (ctx->op_suffixe()->MOINSMOINS())
     {
-        
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+
+        string tmp1 = cfg->create_new_tempvar();
+        // Add a copy instruction to store the variable initial value in a temporary variable
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+
+        string tmp2 = cfg->create_new_tempvar();
+        // Add a copy instruction to store the result in a temporary variable
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp2, 1));
+
+        // Add a subtraction instruction
+        cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, tmp2, "!reg"));
+
+        this->visit(ctx->lvalue());
+
+        // Put back the initial value in !reg
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", tmp1));
     }
 
     return 0;
