@@ -104,7 +104,10 @@ antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx)
 antlrcpp::Any Linearize::visitLvalue(ifccParser::LvalueContext *ctx)
 {
 
-    string varName = cfg->getVarName(ctx->VAR()->getText(), scopeString);
+    string varName;
+    if (ctx->VAR()) {
+        varName = cfg->getVarName(ctx->VAR()->getText(), scopeString);
+    }
 
     // Add a copy instruction to store the register value into the variable
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
@@ -469,7 +472,7 @@ antlrcpp::Any Linearize::visitExprSuffixe(ifccParser::ExprSuffixeContext *ctx)
 {
     string varName;
     if (ctx->lvalue()->VAR()) {
-        varName = ctx->lvalue()->VAR()->getText();
+        varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
     }
 
     if (ctx->opD()->PLUSPLUS())
@@ -519,7 +522,7 @@ antlrcpp::Any Linearize::visitExprSuffixe(ifccParser::ExprSuffixeContext *ctx)
 antlrcpp::Any Linearize::visitExprPrefixe(ifccParser::ExprPrefixeContext *ctx) {
     string varName;
     if (ctx->lvalue()->VAR()) {
-        varName = ctx->lvalue()->VAR()->getText();
+        varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
     }
 
     if (ctx->opD()->PLUSPLUS()) {
