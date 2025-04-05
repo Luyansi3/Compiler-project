@@ -1,8 +1,8 @@
 int main() {
-    int a = 5;
-    while (a > 0) {
-        a--;
+    int x = 4;
+    int count = 0;
+    while (x-- > 0) {
+        count++;
     }
-    
-    return a;
+    return count;
 }
