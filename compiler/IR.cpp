@@ -349,3 +349,21 @@ string CFG::create_return_var()
     symbolIndex.insert({returnVar, flag});
     return returnVar;
 }
+// Get the variable index from the symbol table
+string CFG::getVarName(string name, string scopeString){
+    string var = name + "!"+scopeString;
+
+    size_t pos_bang = var.find_last_of('!');
+    size_t pos_ = var.find_last_of('_');
+    // We are searching the right variables with the right scopes (shadowing if necessary)
+    while (pos_ > pos_bang && pos_ != string::npos)
+    {
+        if(this->getSymbolIndex().find(var) !=this->getSymbolIndex().end()) break;
+        pos_ = var.find_last_of('_');
+        if (pos_ != string::npos) {
+            var.erase(pos_);
+        }   
+    }
+
+    return var;
+}

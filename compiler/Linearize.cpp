@@ -98,24 +98,10 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
 // Visit a variable expression
 antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx)
 {
-    string varName = ctx->VAR()->getText();
-
-    string var = varName + "!"+scopeString;
-
-    size_t pos_bang = var.find_last_of('!');
-    size_t pos_ = var.find_last_of('_');
-    // We are searching the right variables with the right scopes (shadowing if necessary)
-    while (pos_ > pos_bang && pos_ != string::npos)
-    {
-        if(cfg->getSymbolIndex().find(var) !=cfg->getSymbolIndex().end()) break;
-        pos_ = var.find_last_of('_');
-        if (pos_ != string::npos) {
-            var.erase(pos_);
-        }   
-    }
+    string varName = cfg->getVarName(ctx->VAR()->getText(), scopeString);
 
     // Add a copy instruction to load the variable into a register
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", var));
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
 
     return 0;
 }
@@ -154,21 +140,10 @@ antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx)
 antlrcpp::Any Linearize::visitLvalue(ifccParser::LvalueContext *ctx)
 {
 
-    string varName = ctx->VAR()->getText();
-    string var = varName + "!"+scopeString;
+    string varName = cfg->getVarName(ctx->VAR()->getText(), scopeString);
 
-    size_t pos_bang = var.find_last_of('!');
-    size_t pos_ = var.find_last_of('_');
-    while (pos_ > pos_bang && pos_ != string::npos)
-    {
-        if(cfg->getSymbolIndex().find(var) !=cfg->getSymbolIndex().end()) break;
-        pos_ = var.find_last_of('_');
-        if (pos_ != string::npos) {
-            var.erase(pos_);
-        }       
-    }
     // Add a copy instruction to store the register value into the variable
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, var, "!reg"));
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
 
     return 0;   
 }
