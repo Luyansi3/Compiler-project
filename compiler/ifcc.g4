@@ -43,7 +43,7 @@ affectation_simple: lvalue EQUAL expr;
 
 affectation_composee : lvalue op_compose expr;
 
-op_compose: PLUSEQUAL | MOINSEQUAL | MULTEQUAL;
+op_compose: PLUSEQUAL | MOINSEQUAL | MULTEQUAL | DIVEQUAL;
 
 return_stmt: RETURN expr ;
 
@@ -104,15 +104,16 @@ CLOSEPAR      : ')';
 OPENCROCHET   : '{';
 CLOSECROCHET  : '}';
 SEMI          : ';';
-EQUAL         : '=';
-PLUSEQUAL     : '+=';
-MOINSEQUAL    : '-=';
-MULTEQUAL    : '*=';
 PLUS          : '+';
 MINUS         : '-';
 NOT           : '!';
 MULT          : '*';
 DIV           : '/';
+EQUAL         : '=';
+PLUSEQUAL     : '+=';
+MOINSEQUAL    : '-=';
+MULTEQUAL     : '*=';
+DIVEQUAL      : '/=';
 COMMA         : ',';
 COMMENT : '/*' .*? '*/' -> skip ;
 DIRECTIVE : '#' .*? '\n' -> skip ;

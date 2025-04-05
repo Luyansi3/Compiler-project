@@ -63,6 +63,15 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
             cfg->current_bb->add_IRInstr(new IRInstrMul(cfg->current_bb, varName, "!reg"));
             this->visit(ctx->affectation_composee()->lvalue()); 
         }
+        if (ctx->affectation_composee()->op_compose()->DIVEQUAL()) {
+            // Visit the expression and the left-hand side of the assignment
+            this->visit(ctx->affectation_composee()->expr());
+            string tmp = cfg->create_new_tempvar();
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+            cfg->current_bb->add_IRInstr(new IRInstrDiv(cfg->current_bb, tmp));
+            this->visit(ctx->affectation_composee()->lvalue()); 
+        }
     }
 
     return 0;
