@@ -43,7 +43,8 @@ return_stmt: RETURN expr ;
 lvalue: VAR ;
 
 expr: OPENPAR expr CLOSEPAR #ExprPar
-    | lvalue op_suffixe     #ExprSuffixe
+    | lvalue opD            #ExprSuffixe
+    | opD lvalue            #ExprPrefixe
     | opU expr              #ExprUnary
     | expr opM expr         #MulDiv
     | expr opA expr         #AddSub
@@ -56,7 +57,7 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | VAR                   #ExprVar
     | constante             #ExprConst ;
 
-op_suffixe: PLUSPLUS | MOINSMOINS;
+opD: PLUSPLUS | MOINSMOINS;
 
 
 liste_param: expr (COMMA expr)*
