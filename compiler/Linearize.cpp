@@ -50,9 +50,44 @@ antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 // Visit an assignment
 antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
 {
-    // // Visit the expression and the left-hand side of the assignment
-    this->visit(ctx->expr());
-    this->visit(ctx->lvalue());
+    if (ctx->op_compose()->EQUAL())
+    {
+        this->visit(ctx->expr());
+        this->visit(ctx->lvalue());
+    }
+    else
+    {
+        if (ctx->op_compose()->PLUSEQUAL())
+        {
+            string varName;
+            string index;
+            bool tab = false;
+            if (ctx->lvalue()->expr())
+            {
+                this->visit(ctx->lvalue()->expr());
+                index = cfg->create_new_tempvar();
+                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, index, "!reg"));
+                varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
+                tab = true;
+            }
+            else
+            {
+                varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
+            }
+
+            if (ctx->op_compose()->PLUSEQUAL()) {
+                // Visit the expression and the left-hand side of the assignment
+                this->visit(ctx->expr());
+                if(tab){
+                    cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, index, "!reg", varName));
+                }
+                else {
+                    cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, "!reg", varName));
+                }
+            }
+        }
+    }
+
     return 0;
 }
 antlrcpp::Any Linearize::visitTableAffectation(ifccParser::TableAffectationContext *ctx)
@@ -87,7 +122,6 @@ antlrcpp::Any Linearize::visitTableAffectation(ifccParser::TableAffectationConte
 
     return 0;
 }
-
 
 // Visit a variable expression
 antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx)

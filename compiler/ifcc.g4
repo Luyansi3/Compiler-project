@@ -38,7 +38,9 @@ else_stmt: ELSE (instruction | block) ;
 
 while_stmt: WHILE OPENPAR expr CLOSEPAR (instruction | block) ;
 
-affectation: lvalue EQUAL expr;
+affectation: lvalue op_compose expr;
+
+op_compose: EQUAL | PLUSEQUAL | MOINSEQUAL;
 
 array_litteral : OPENCROCHET (expr (COMMA expr)*)? CLOSECROCHET;
 return_stmt: RETURN expr ;
@@ -119,6 +121,7 @@ CLOSEBRACKET  : ']';
 
 SEMI          : ';';
 EQUAL         : '=';
+PLUSEQUAL     : '+=';
 PLUS          : '+';
 MINUS         : '-';
 MOD           : '%';
