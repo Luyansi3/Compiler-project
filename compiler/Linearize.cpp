@@ -472,7 +472,7 @@ antlrcpp::Any Linearize::visitExprSuffixe(ifccParser::ExprSuffixeContext *ctx)
         varName = ctx->lvalue()->VAR()->getText();
     }
 
-    if (ctx->op_suffixe()->PLUSPLUS())
+    if (ctx->opD()->PLUSPLUS())
     {
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
 
@@ -492,7 +492,7 @@ antlrcpp::Any Linearize::visitExprSuffixe(ifccParser::ExprSuffixeContext *ctx)
         // Put back the initial value in !reg
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", tmp1));
     }
-    else if (ctx->op_suffixe()->MOINSMOINS())
+    else if (ctx->opD()->MOINSMOINS())
     {
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
 
@@ -511,6 +511,28 @@ antlrcpp::Any Linearize::visitExprSuffixe(ifccParser::ExprSuffixeContext *ctx)
 
         // Put back the initial value in !reg
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", tmp1));
+    }
+
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitExprPrefixe(ifccParser::ExprPrefixeContext *ctx) {
+    string varName;
+    if (ctx->lvalue()->VAR()) {
+        varName = ctx->lvalue()->VAR()->getText();
+    }
+
+    if (ctx->opD()->PLUSPLUS()) {
+        string tmp = cfg->create_new_tempvar();
+        // Add a copy instruction to store the result in a temporary variable
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp, 1));
+
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+
+        // Add an addition instruction
+        cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, tmp, "!reg"));
+
+        this->visit(ctx->lvalue());
     }
 
     return 0;
