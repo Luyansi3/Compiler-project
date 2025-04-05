@@ -34,8 +34,8 @@ antlrcpp::Any SymbolTableVisitor::visitProg(ifccParser::ProgContext *ctx) {
 // Visit the declaration of the elements 
 antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementContext *ctx) 
 {
-    if(ctx->affectation()){
-        string var = ctx->affectation()->lvalue()->VAR()->getText();
+    if(ctx->affectation_simple()){
+        string var = ctx->affectation_simple()->lvalue()->VAR()->getText();
         if(symbolTableVar.find(var) == symbolTableVar.end()){
             FlagVar flagVar;
             flagVar.used = false;
@@ -48,7 +48,7 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementCont
             cerr<< "Variable " << var << " deja déclaré" << endl;
             exit(1);
         }
-        this->visit(ctx->affectation());
+        this->visit(ctx->affectation_simple());
 
     }
     else{
@@ -72,7 +72,7 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementCont
 
 
 //Visit the affectation
-antlrcpp::Any SymbolTableVisitor::visitAffectation(ifccParser::AffectationContext *ctx){
+antlrcpp::Any SymbolTableVisitor::visitAffectation_simple(ifccParser::Affectation_simpleContext *ctx){
     string varName = ctx->lvalue()->VAR()->getText();    
     if(symbolTableVar.find(varName)==symbolTableVar.end()){
         cerr << "Variable " << varName << " non déclarée" << endl;
@@ -80,6 +80,20 @@ antlrcpp::Any SymbolTableVisitor::visitAffectation(ifccParser::AffectationContex
     }
     else{
         symbolTableVar[varName].affected = true;
+    }
+    this->visit(ctx->lvalue());
+    this->visit(ctx->expr());
+    return 0;
+}
+
+antlrcpp::Any SymbolTableVisitor::visitAffectation_composee(ifccParser::Affectation_composeeContext *ctx){
+    string varName = ctx->lvalue()->VAR()->getText();    
+    if(symbolTableVar.find(varName)==symbolTableVar.end()){
+        cerr << "Variable " << varName << " non déclarée" << endl;
+        exit(1);
+    }
+    else{
+        symbolTableVar[varName].used = true;
     }
     this->visit(ctx->lvalue());
     this->visit(ctx->expr());

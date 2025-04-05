@@ -35,13 +35,35 @@ antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 // Visit an assignment
 antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
 {
-    // Visit the expression and the left-hand side of the assignment
-    this->visit(ctx->expr());
-    this->visit(ctx->lvalue());
+    if (ctx->affectation_simple())
+    {
+        this->visit(ctx->affectation_simple());
+    }
+    else
+    {
+        string varName;
+        if (ctx->affectation_composee()->lvalue()->VAR())
+        {
+            varName = ctx->affectation_composee()->lvalue()->VAR()->getText();
+        }
+
+        if (ctx->affectation_composee()->op_compose()->PLUSEQUAL()) {
+            // Visit the expression and the left-hand side of the assignment
+            this->visit(ctx->affectation_composee()->expr());
+            cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, "!reg", varName));
+        }
+    }
 
     return 0;
 }
 
+antlrcpp::Any Linearize::visitAffectation_simple(ifccParser::Affectation_simpleContext *ctx)
+{
+    // Visit the expression and the left-hand side of the assignment
+    this->visit(ctx->expr());
+    this->visit(ctx->lvalue());
+    return 0;
+}
 
 
 // Visit a variable expression

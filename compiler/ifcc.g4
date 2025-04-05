@@ -26,7 +26,7 @@ decl_param : type VAR ;
 declaration: type decl_element (COMMA decl_element)* ;
 
 decl_element: VAR
-            | affectation ;
+            | affectation_simple ;
 
 if_stmt: IF OPENPAR expr CLOSEPAR (instruction | block) (elif_stmt)* (else_stmt)? ;
 
@@ -36,7 +36,14 @@ else_stmt: ELSE (instruction | block) ;
 
 while_stmt: WHILE OPENPAR expr CLOSEPAR (instruction | block) ;
 
-affectation: lvalue EQUAL expr ;
+affectation: affectation_simple      
+           | affectation_composee;
+
+affectation_simple: lvalue EQUAL expr;
+
+affectation_composee : lvalue op_compose expr;
+
+op_compose: PLUSEQUAL | MOINSEQUAL;
 
 return_stmt: RETURN expr ;
 
@@ -98,6 +105,7 @@ OPENCROCHET   : '{';
 CLOSECROCHET  : '}';
 SEMI          : ';';
 EQUAL         : '=';
+PLUSEQUAL     : '+=';
 PLUS          : '+';
 MINUS         : '-';
 NOT           : '!';

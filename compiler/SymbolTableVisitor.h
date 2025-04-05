@@ -25,12 +25,13 @@ class SymbolTableVisitor : public ifccBaseVisitor {
 
         // Override methods to visit different parts of the parse tree
         virtual antlrcpp::Any visitDecl_element(ifccParser::Decl_elementContext *ctx) override;
-        virtual antlrcpp::Any visitAffectation(ifccParser::AffectationContext *ctx) override;
+        virtual antlrcpp::Any visitAffectation_simple(ifccParser::Affectation_simpleContext *ctx) override;
         virtual antlrcpp::Any visitExprVar(ifccParser::ExprVarContext *ctx) override;
         virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override;
         virtual antlrcpp::Any visitCall(ifccParser::CallContext * ctx) override;
         virtual antlrcpp::Any visitDecl_fonction(ifccParser::Decl_fonctionContext *ctx) override;
         virtual antlrcpp::Any visitDecl_param(ifccParser::Decl_paramContext *ctx) override;
+        virtual antlrcpp::Any visitAffectation_composee(ifccParser::Affectation_composeeContext *ctx) override;
     private:
         int index; // Index to keep track of variable positions
 };
