@@ -57,39 +57,54 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
     }
     else
     {
+        string varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
+        string tableVar;
+        string index;
+        bool tab = false;
+        if (ctx->lvalue()->expr())
+        {
+            this->visit(ctx->lvalue()->expr());
+            index = cfg->create_new_tempvar();
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, index, "!reg"));
+            tableVar = cfg->create_new_tempvar();
+            cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, tableVar, index, varName));
+            tab = true;
+        }
+
+        // Visit the expression and the left-hand side of the assignment
+        this->visit(ctx->expr());
+
         if (ctx->op_compose()->PLUSEQUAL())
         {
-            string varName;
-            string index;
-            bool tab = false;
-            if (ctx->lvalue()->expr())
-            {
-                this->visit(ctx->lvalue()->expr());
-                index = cfg->create_new_tempvar();
-                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, index, "!reg"));
-                varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
-                tab = true;
+            if(tab){
+                cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, tableVar, "!reg"));
+                cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, "!reg", index, varName));
             }
-            else
-            {
-                varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
-            }
-
-            if (ctx->op_compose()->PLUSEQUAL()) {
-                // Visit the expression and the left-hand side of the assignment
-                this->visit(ctx->expr());
-                if(tab){
-                    cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, index, "!reg", varName));
-                }
-                else {
-                    cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, "!reg", varName));
-                }
+            else {
+                cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, varName, "!reg"));
+                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
             }
         }
-        if (ctx->affectation_composee()->op_compose()->MOINSEQUAL()) {
-            // Visit the expression and the left-hand side of the assignment
-            this->visit(ctx->affectation_composee()->expr());
-            cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, "!reg", varName));
+        else if (ctx->op_compose()->MOINSEQUAL()) {
+            if(tab){
+                cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, "!reg", tableVar));
+                cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, tableVar, index, varName));
+                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", tableVar));
+            }
+            else {
+                cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, "!reg", varName));
+                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+            }
+        }
+        else if (ctx->op_compose()->MULTEQUAL()) {
+            if (tab) {
+                cfg->current_bb->add_IRInstr(new IRInstrMul(cfg->current_bb, tableVar, "!reg"));
+                cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, "!reg", index, varName));
+            }
+            else {
+                cfg->current_bb->add_IRInstr(new IRInstrMul(cfg->current_bb, varName, "!reg"));
+                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
+            }
         }
     }
 
