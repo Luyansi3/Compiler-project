@@ -40,8 +40,16 @@ antlrcpp::Any Linearize::visitBlock(ifccParser::BlockContext *ctx) {
 antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 {
     // Visit the expression in the return statement
-    this->visit(ctx->expr());
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!returnVal","!reg"));
+    auto e = this->visit(ctx->expr());
+
+    // If I get a constant I need to put it inside reg
+    if (e.is<int>()) {
+        int result = e.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!returnVal",result));
+    }
+    else{
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!returnVal","!reg"));
+    }
     cfg->current_bb->add_IRInstr(new IRInstrJump(cfg->current_bb,cfg->bb_epi->label));
 
     return 0;
@@ -52,8 +60,18 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
 {
     if (ctx->op_compose()->EQUAL())
     {
-        this->visit(ctx->expr());
+        // Visit the expression and the left-hand side of the assignment
+        auto e = this->visit(ctx->expr());
+        // If this is a constant that does not come from ConstContext we put it in reg
+        // otherwise the constant is already inside reg
+
+        if (e.is<int>() && !dynamic_cast<ifccParser::ExprConstContext*>(ctx->expr())) {
+            
+            int result = e.as<int>();
+            cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg",result));
+        }
         this->visit(ctx->lvalue());
+        
     }
     else
     {
@@ -71,8 +89,11 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
         }
 
         // Visit the expression and the left-hand side of the assignment
-        this->visit(ctx->expr());
-
+        auto e = this->visit(ctx->expr());
+        if (e.is<int>() && !dynamic_cast<ifccParser::ExprConstContext*>(ctx->expr())) {
+            int result = e.as<int>();
+            cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg",result));
+        }
         if (ctx->op_compose()->PLUSEQUAL())
         {
             cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, varName, "!reg"));
@@ -116,7 +137,8 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
         this->visit(ctx->lvalue());
     }
 
-    return 0;
+    
+    return nullptr;
 }
 antlrcpp::Any Linearize::visitTableAffectation(ifccParser::TableAffectationContext *ctx)
 {
@@ -148,7 +170,7 @@ antlrcpp::Any Linearize::visitTableAffectation(ifccParser::TableAffectationConte
         i++;
     }
 
-    return 0;
+    return nullptr;
 }
 
 // Visit a variable expression
@@ -159,23 +181,38 @@ antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx)
     // Add a copy instruction to load the variable into a register
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
 
-    return 0;
+    return nullptr;
 }
 
 antlrcpp::Any Linearize::visitExprUnary(ifccParser::ExprUnaryContext *ctx)
 {
-    this->visit(ctx->expr());
-    // If the expression has a unary minus operator, add a negation instruction
+    auto e = this->visit(ctx->expr());
+            
     if (ctx->opU()->MINUS())
     {
+        if (e.is<int>()) {
+            int result = e.as<int>();
+            return (int) (-result);
+        }
         cfg->current_bb->add_IRInstr(new IRInstrNeg(cfg->current_bb, "!reg"));
     }
-
     else if(ctx->opU()->NOT()){
         cfg->current_bb->add_IRInstr(new IRInstrNot(cfg->current_bb, "!reg"));
     }
 
-    return 0;
+    return nullptr;
+}
+
+antlrcpp::Any Linearize::visitExprPar(ifccParser::ExprParContext *ctx)
+{
+    auto e = this->visit(ctx->expr());
+        
+    if (e.is<int>()) {
+        int result = e.as<int>();
+        return (int) (result);
+    }
+
+    return nullptr;
 }
 
 // Visit a constant expression
@@ -187,10 +224,14 @@ antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx)
     else
         retval = (int)ctx->constante()->CONSTCHAR()->getText()[1];
 
-    // Add a load constant instruction
-    cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", retval));
-
-    return 0;
+    auto parent = ctx->parent; // If we come from add sub mul or div context we dont need to load the value
+                                // in reg, because we will compute directly whithout using reg
+    if(!dynamic_cast<ifccParser::ExprAddSubContext *>(parent) && !dynamic_cast<ifccParser::ExprMulDivModContext *>(parent)){
+        // Add a load constant instruction
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", retval));
+    }
+    
+    return (int) retval;
 }
 
 // Visit a left-hand side value
@@ -222,80 +263,158 @@ antlrcpp::Any Linearize::visitLvalue(ifccParser::LvalueContext *ctx)
 // Visit a multiplication or division expression
 antlrcpp::Any Linearize::visitExprMulDivMod(ifccParser::ExprMulDivModContext *ctx)
 {
-    auto expr1 = ctx->expr(0);
-    auto expr2 = ctx->expr(1);
 
-    if (ctx->opM()->MULT())
-    {
-        // Visit the first expression
-        this->visit(expr1);
-        string tmp = cfg->create_new_tempvar();
-        // Add a copy instruction to store the result in a temporary variable
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
-        // Visit the second expression
-        this->visit(expr2);
-        // Add a multiplication instruction
-        cfg->current_bb->add_IRInstr(new IRInstrMul(cfg->current_bb, tmp, "!reg"));
-    }
-    else if (ctx->opM()->MOD()) {
-        auto expr1 = ctx->expr(0);
-        auto expr2 = ctx->expr(1);
-
-        this->visit(expr2);
-        string tmp1 = cfg->create_new_tempvar();
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
-
-        this->visit(expr1);
-
-        
-        cfg->current_bb->add_IRInstr(new IRInstrMod(cfg->current_bb, tmp1));
+    int resultLeft, resultRight;
+    bool leftConst = false , rightConst= false;
+    string tmp1;
+    auto e2 = this->visit(ctx->expr()[1]);
+    // If we get a constant value
+    if (e2.is<int>()) {
+        resultRight = e2.as<int>();
+        rightConst= true;
     }
     else{
-        // Visit the second expression
-        this->visit(expr2);
-        string tmp = cfg->create_new_tempvar();
+        tmp1 = cfg->create_new_tempvar();
         // Add a copy instruction to store the result in a temporary variable
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
-        // Visit the first expression
-        this->visit(expr1);
-        // Add a division instruction
-        cfg->current_bb->add_IRInstr(new IRInstrDiv(cfg->current_bb, tmp));
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
     }
-    return 0;
+    
+    auto e1 = this->visit(ctx->expr()[0]);        
+    if (e1.is<int>()) {
+        resultLeft = e1.as<int>();
+        leftConst= true;
+    }
+        
+
+    if (rightConst && resultRight==1 ) // If .. * or / 1
+    {
+        if (!leftConst) // if a * or /1 (value of a already in reg)
+        {
+            return nullptr;
+        }
+        
+    }
+    if (leftConst && resultLeft == 1) 
+    {
+        if (ctx->opM()->MULT() && !rightConst) // If  1*a // we just put a that is in tmp1 in reg 
+        {
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb,"!reg" ,tmp1 ));
+            return nullptr;
+        }
+        
+    }
+    
+
+    if (leftConst && rightConst) // If we have both constant
+    {
+        if (ctx->opM()->MULT()) return (int) resultLeft * resultRight;
+        else if (ctx->opM()->MOD())
+        {
+            return (int) (resultLeft % resultRight);
+        }
+        
+        else{
+            if (resultRight == 0)
+            {
+                cerr << "Division par 0" << endl; 
+                exit(1);
+            } 
+            return (int) (resultLeft / resultRight);
+        }
+    }
+    else if (leftConst && !rightConst) // if only leftside is a constant  we put the result in reg
+    {
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", resultLeft));
+    }
+    else if (!leftConst && rightConst) // if only rightside is a constant  we put the result in tmp1
+    {
+        tmp1 = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp1, resultRight));
+    }
+
+    if (ctx->opM()->MULT()) cfg->current_bb->add_IRInstr(new IRInstrMul(cfg->current_bb, tmp1, "!reg")); // then we multiply tmp1 and reg
+    else if (ctx->opM()->MOD())
+    {
+        cfg->current_bb->add_IRInstr(new IRInstrMod(cfg->current_bb, tmp1)); // we do reg % tmp1
+    }
+    
+    else{
+        cfg->current_bb->add_IRInstr(new IRInstrDiv(cfg->current_bb, tmp1)); // we divide reg by tmp1
+    } 
+
+    return nullptr;
 }
 
 // Visit an addition or subtraction expression
 antlrcpp::Any Linearize::visitExprAddSub(ifccParser::ExprAddSubContext *ctx)
 {
-    if (ctx->opA()->PLUS())
-    {
-        // Visit the first expression
-        this->visit(ctx->expr()[0]);
-        string tmp1 = cfg->create_new_tempvar();
+    // Visit the first expression
+    int resultLeft, resultRight;
+    bool leftConst = false , rightConst= false;
+    string tmp1;
+    
+    auto e2 = this->visit(ctx->expr()[1]);
+    // If we get a constant value
+    if (e2.is<int>()) {
+        resultRight = e2.as<int>();
+        rightConst= true;
+    }
+    else{
+        tmp1 = cfg->create_new_tempvar();
         // Add a copy instruction to store the result in a temporary variable
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
-
-        // Visit the second expression
-        this->visit(ctx->expr()[1]);
-
-        // Add an addition instruction
-        cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, tmp1, "!reg"));
     }
-    else if (ctx->opA()->MINUS())
+
+    auto e1 = this->visit(ctx->expr()[0]);
+    if (e1.is<int>()) {
+        resultLeft = e1.as<int>();
+        leftConst= true;
+    }
+    
+
+    if (rightConst && resultRight==0 ) // If .. + or - 0
     {
-        // Visit the second expression
-        this->visit(ctx->expr()[1]);
-        string tmp1 = cfg->create_new_tempvar();
-        // Add a copy instruction to store the result in a temporary variable
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
-
-        // Visit the first expression
-        this->visit(ctx->expr()[0]);
-
-        // Add a subtraction instruction
-        cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, tmp1, "!reg"));
+        if (!leftConst) // if a + or - 0 (value of a already in reg)
+        {
+            return nullptr;
+        }
+        
     }
-    return 0;
+    if (leftConst && resultLeft == 0)
+    {
+        if (ctx->opA()->PLUS() && !rightConst) // If  0+a // we just put a that is in tmp1 in reg 
+        {
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb,"!reg" ,tmp1 ));
+            return nullptr;
+        }
+        
+    }
+    
+    if (leftConst && rightConst) // If we have both constant
+    {
+        if (ctx->opA()->PLUS()) return (int) resultLeft + resultRight;
+        else return (int) (resultLeft - resultRight); 
+        
+    }
+    else if (leftConst && !rightConst) // if only leftside is a constant  we put the result in reg
+    {
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", resultLeft)); 
+   
+    }
+    else if (!leftConst && rightConst)  // if only rightside is a constant  we put the result in tmp1
+    {
+        tmp1 = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp1, resultRight));
+        
+    }
+
+    if (ctx->opA()->PLUS()) cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, tmp1, "!reg")); // then we add tmp1 and reg
+    else{
+        cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, tmp1, "!reg")); // then we sub  reg - tmp1
+    } 
+
+
+    return nullptr;
 }
 
 
@@ -319,7 +438,7 @@ antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
     cfg->current_bb->add_IRInstr(new IrInstrCall(cfg->current_bb, label, params));
     
    
-    return 0;
+    return nullptr;
 }
 
 antlrcpp::Any Linearize::visitExprCompRelationnal(ifccParser::ExprCompRelationnalContext *ctx)
@@ -346,7 +465,7 @@ antlrcpp::Any Linearize::visitExprCompRelationnal(ifccParser::ExprCompRelationna
         // Add a comparison instruction
         cfg->current_bb->add_IRInstr(new IRInstrCmpSUP(cfg->current_bb, tmp1, "!reg"));
     }
-    return 0;
+    return nullptr;
 }
 
 antlrcpp::Any Linearize::visitExprCompEqual(ifccParser::ExprCompEqualContext *ctx)
@@ -373,7 +492,7 @@ antlrcpp::Any Linearize::visitExprCompEqual(ifccParser::ExprCompEqualContext *ct
         // Add a comparison instruction
         cfg->current_bb->add_IRInstr(new IRInstrCmpNEQ(cfg->current_bb, tmp1, "!reg"));
     }
-    return 0;
+    return nullptr;
 }
 
 antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx)
@@ -525,7 +644,7 @@ antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
     bb_true->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", 1));
     bb_false->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", 0));
     cfg->current_bb = bb_end;
-    return 0;
+    return nullptr;
 }
 
 antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
@@ -560,7 +679,7 @@ antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
     bb_true->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", 1));
     bb_false->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", 0));
     cfg->current_bb = bb_end;
-    return 0;
+    return nullptr;
 }
 
 antlrcpp::Any Linearize::visitWhile_stmt(ifccParser::While_stmtContext *ctx)
