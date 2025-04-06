@@ -311,6 +311,17 @@ protected:
     string nameFunction;
     antlr4::tree::ParseTree* tree;
     vector<BasicBlock *> bbs;                /**< all the basic blocks of this CFG */
-    BasicBlock *bb_Exit;
-    
 };
+
+class IRInstrMod : public IRInstr {
+    public:
+        IRInstrMod(BasicBlock *bb, string src2)
+            : IRInstr(bb), src2(src2) {}
+    
+        void gen_asm(ostream &o) override;
+    
+    private:
+          
+       string src2;  // Diviseur
+    };
+     

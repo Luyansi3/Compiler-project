@@ -183,6 +183,7 @@ antlrcpp::Any Linearize::visitAddSub(ifccParser::AddSubContext *ctx)
 
 
 
+
 antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
     //Obtentino du label de la fonction
     string label = ctx->VAR()->getText();
@@ -553,3 +554,24 @@ antlrcpp::Any Linearize::visitExprPrefixe(ifccParser::ExprPrefixeContext *ctx) {
 
     return 0;
 }
+
+antlrcpp::Any Linearize::visitModulo(ifccParser::ModuloContext *ctx) {
+    auto expr1 = ctx->expr(0);
+    auto expr2 = ctx->expr(1);
+
+    // Visiter la première expression et récupérer la variable temporaire associée
+    this->visit(expr2);
+    string tmp1 = cfg->create_new_tempvar();
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+
+    // Visiter la deuxième expression et récupérer la variable temporaire associée
+    this->visit(expr1);
+    
+    // Générer l'instruction IR pour le modulo
+    
+    cfg->current_bb->add_IRInstr(new IRInstrMod(cfg->current_bb, tmp1));
+
+    return 0; // Retourner le résultat
+}
+
+
