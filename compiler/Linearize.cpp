@@ -224,9 +224,12 @@ antlrcpp::Any Linearize::visitAddSub(ifccParser::AddSubContext *ctx)
     return 0;
 }
 
-antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx)
-{
-    // Obtentino du label de la fonction
+
+
+
+
+antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
+    //Obtentino du label de la fonction
     string label = ctx->VAR()->getText();
     vector<string> params;
 

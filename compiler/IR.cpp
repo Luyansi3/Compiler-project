@@ -386,6 +386,7 @@ CFG::~CFG()
     }
 }
 
+
 string CFG::create_return_var()
 {
     int next = 0;
@@ -421,3 +422,20 @@ string CFG::getVarName(string name, string scopeString)
 
     return var;
 }
+
+// Génération du code assembleur pour le modulo
+void IRInstrMod::gen_asm(ostream &o) {
+     
+    string reg_divisor = bb->cfg->IR_reg_to_asm(src2);  // Diviseur 
+    
+
+    // Charger le dividende dans eax
+    
+    o << "    cltd\n"; // Étend eax en edx:eax pour division signée
+    o << "    idivl " << reg_divisor << "\n"; // Division signée : quotient dans eax, reste dans edx
+
+    // Stocker le reste (modulo) dans la destination
+    o << "    movl %edx, " << "%eax\n";
+}
+
+

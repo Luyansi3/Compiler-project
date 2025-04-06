@@ -45,12 +45,14 @@ return_stmt: RETURN expr ;
 
 lvalue: VAR (OPENBRACKET expr CLOSEBRACKET)? ;
 
+
 expr: OPENPAR expr CLOSEPAR #ExprPar
     | lvalue opD            #ExprSuffixe
     | opD lvalue            #ExprPrefixe
     | opU expr              #ExprUnary
     | expr opM expr         #MulDiv
     | expr opA expr         #AddSub
+    | expr MOD expr     #Modulo
     | expr compRelationnal expr    #ExprCompRelationnal
     | expr compEqual expr    #ExprCompEqual
     | expr AND expr         #ExprAnd
@@ -60,6 +62,7 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | VAR                   #ExprVar
     | constante             #ExprConst 
     | VAR OPENBRACKET expr CLOSEBRACKET #ExprTable;
+
 
 opD: PLUSPLUS | MOINSMOINS;
 
@@ -114,6 +117,7 @@ SEMI          : ';';
 EQUAL         : '=';
 PLUS          : '+';
 MINUS         : '-';
+MOD           : '%';
 NOT           : '!';
 MULT          : '*';
 DIV           : '/';
