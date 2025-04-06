@@ -54,7 +54,7 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementCont
             index -= 4;
         }
         else{
-            cerr<< "Variable " << var << " deja déclaré" << endl;
+            cerr<< "Variable " << var << " déjà déclaré" << endl;
             exit(1);
         }
         this->visit(ctx->affectation());
@@ -71,7 +71,7 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementCont
             index -= 4;
         }
         else{
-            cerr<< "Variable " << var << " deja déclaré" << endl;
+            cerr<< "Variable " << var << " déjà déclarée" << endl;
             exit(1);
         }
     } 
@@ -123,9 +123,10 @@ antlrcpp::Any SymbolTableVisitor::visitCall(ifccParser::CallContext* ctx) {
         flag.nombreParams = nbParams;
         flag.type = "";
         symbolTableFonction.insert({label, flag});
-        cerr << "La fonction " << label << " est appelée avant d'être déclarée" << endl;
+        if (label != "putchar" && label != "getchar")
+            cerr << "La fonction " << label << " est appelée avant d'être déclarée" << endl;
     } else if (symbolTableFonction[label].nombreParams != nbParams) {
-        cerr << "La fonction " << label << " est appelée avec le mauvais nb de params" << endl;
+        cerr << "La fonction " << label << " est appelée avec le mauvais nombre de paramètres" << endl;
         exit(1);
     } else {
         symbolTableFonction[label].used = true;
@@ -151,7 +152,7 @@ antlrcpp::Any SymbolTableVisitor::visitPre_decl_fonction(ifccParser::Pre_decl_fo
             cerr << "La fonction " << label << " a déjà été déclarée" << endl;
             exit(1); 
         } else if (symbolTableFonction[label].nombreParams != nbParams) {
-            cerr << "La fonction " << label << " est appelée avec le mauvais nb d'arguments" << endl;
+            cerr << "La fonction " << label << " est appelée avec le mauvais nombre d'arguments" << endl;
         } else if (symbolTableFonction[label].type != "" && symbolTableFonction[label].type != type) {
             cerr << "La fonction " << label << " est appelée avec le mauvais type de retour" << endl;
         } else if (symbolTableFonction[label].type == ""){
