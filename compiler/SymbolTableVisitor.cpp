@@ -93,11 +93,20 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementCont
     {
         auto affect = dynamic_cast<ifccParser::TableAffectationContext *>(ctx->affectation());
         string varName = affect->VAR()->getText();
-        int tableSize = stoi(affect->constante()->getText());
+        int tableSize = 0;
+        if (affect->constante())
+        {
+             tableSize = stoi(affect->constante()->getText());
+        }
+        else
+        {
+             tableSize = affect->array_litteral()->expr().size();
+        }
         // Iterate in reverse so that element 0 is allocated last, receiving the smallest index.
 
         FlagVar flagVar;
 
+        index -= (tableSize - 1) * 4; 
         flagVar.index = index;
         flagVar.affected = false;
         flagVar.used = false;
@@ -191,10 +200,22 @@ antlrcpp::Any SymbolTableVisitor::visitTableAffectation(ifccParser::TableAffecta
     else
     {
         int exprListSize = (ctx->array_litteral()->expr()).size();
-        int constante = stoi(ctx->constante()->getText());
+        if (ctx->constante())
+        {
+            int constante = stoi(ctx->constante()->getText());
 
-        for (int i = 0; i < min(constante, exprListSize); i++)
-        symbolTableVar[ctx->VAR()->getText()].affected = true;
+            for (int i = 0; i < min(constante, exprListSize); i++)
+            {
+
+                symbolTableVar[ctx->VAR()->getText()].affected = true;
+                // cout<<min(constante, exprListSize)<<endl;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < exprListSize; i++)
+            symbolTableVar[ctx->VAR()->getText()].affected = true;
+        }
     }
     this->visit(ctx->array_litteral());
     return 0;
