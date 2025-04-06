@@ -35,31 +35,6 @@ antlrcpp::Any Linearize::visitBlock(ifccParser::BlockContext *ctx) {
 }
 
 
-antlrcpp::Any Linearize::visitInstrBlock(ifccParser::InstrBlockContext *ctx)
-{
-    BasicBlock *bb_init = cfg->current_bb;
-    BasicBlock *bb_simple = new BasicBlock(cfg, cfg->new_BB_name() + "_simple");
-    BasicBlock *bb_next = new BasicBlock(cfg, cfg->current_bb->label + "_next");
-
-    bb_simple->exit_true = bb_next;
-
-    bb_next->exit_true = cfg->current_bb->exit_true;
-    bb_next->exit_false =cfg->current_bb->exit_false;
-
-    cfg->current_bb->exit_true = bb_simple;
-    
-
-
-    cfg->current_bb = bb_simple;
-    cfg->add_bb(bb_simple);
-    cfg->add_bb(bb_next);
-
-    this->visit(ctx->block());
-
-    cfg->current_bb = bb_next;
-
-    return 0;
-}
 
 // Visit a return statement
 antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
@@ -69,17 +44,6 @@ antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!returnVal","!reg"));
     cfg->current_bb->add_IRInstr(new IRInstrJump(cfg->current_bb,cfg->bb_epi->label));
 
-    
-    
-    
-
-
-
-    // Create a new basic block for the epilogue
-    // BasicBlock *bb_epilogue = new BasicBlock(cfg, cfg->getNameFunction() + "_epilogue");
-    // bb_epilogue->add_IRInstr(new IRInstrEpilogue(bb_epilogue));
-    // cfg->add_bb(bb_epilogue);
-    // cfg->current_bb->exit_true = bb_epilogue;
     return 0;
 }
 

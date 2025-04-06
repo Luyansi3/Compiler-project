@@ -185,18 +185,6 @@ void IRInstrCmpSUP::gen_asm(ostream &o){
     o << "    movzbl %al, %eax\n";
 }
 
-void IRInstrExit::gen_asm(ostream &o)
-{
-    // o << "Exit_block :" << endl;
-    //     o << "    movl" << src1 << ", " << src2 << "\n";
-    //     o << "    popq %rbp\n";
-    //     o << "    ret\n";
-    string source = this->bb->cfg->IR_reg_to_asm(src);
-
-    o << "    movl " << source << ", %eax" << "\n";
-    o << "    popq %rbp\n";
-    o << "    ret\n";
-}
 
 void IRInstrJump::gen_asm(ostream &o)
 {
@@ -312,7 +300,7 @@ string CFG::create_new_tempvar()
 
 // Constructor for CFG
 CFG::CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4::tree::ParseTree* tree, int nbParams)
-    : symbolIndex(symbolIndex), nextBBnumber(0), nameFunction(nameFunction), nextFreeSymbolIndex(symbolIndex.size() * -4), ExitBlockDefined(0), tree(tree), nbParams(nbParams)
+    : symbolIndex(symbolIndex), nextBBnumber(0), nameFunction(nameFunction), nextFreeSymbolIndex(symbolIndex.size() * -4), tree(tree), nbParams(nbParams)
 {
     BasicBlock *bb_prologue = new BasicBlock(this, nameFunction);
     bb_prologue->add_IRInstr(new IRInstrPrologue(bb_prologue));

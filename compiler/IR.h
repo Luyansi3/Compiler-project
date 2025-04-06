@@ -165,17 +165,6 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
-class IRInstrExit : public IRInstr
-{
-private:
-    string src;
-
-public:
-    IRInstrExit(BasicBlock *bb, string src) : IRInstr(bb), src(src)
-    {
-    }
-    virtual void gen_asm(ostream &o) override;
-};
 
 class IRInstrJump : public IRInstr
 {
@@ -301,7 +290,6 @@ public:
     // void genrateExitAsm(ostream&o);
     string create_return_var();
     string create_new_tempvar();
-    int get_var_index(string name);
 
     antlr4::tree::ParseTree* getTree() {return tree;}
 
@@ -311,10 +299,6 @@ public:
     int getNextFreeSymbolIndex() {return nextFreeSymbolIndex;}
     string getVarName(string name, string scopeString);
 
-    int getNbExitBlock(){return ExitBlockDefined;}
-    void incrementNbExitBlock(){ExitBlockDefined++;}
-    BasicBlock* getExitBB(){return this->bb_Exit;}
-    void setExitBB(BasicBlock*bb){bb_Exit=bb;}
     string new_BB_name();
     BasicBlock *current_bb;
     BasicBlock *bb_epi;
@@ -328,6 +312,5 @@ protected:
     antlr4::tree::ParseTree* tree;
     vector<BasicBlock *> bbs;                /**< all the basic blocks of this CFG */
     BasicBlock *bb_Exit;
-    int ExitBlockDefined;
     
 };
