@@ -197,7 +197,18 @@ antlrcpp::Any Linearize::visitExprUnary(ifccParser::ExprUnaryContext *ctx)
         cfg->current_bb->add_IRInstr(new IRInstrNeg(cfg->current_bb, "!reg"));
     }
     else if(ctx->opU()->NOT()){
+        if (e.is<int>()) {
+            int result = e.as<int>();
+            return (int) (!result);
+        }
         cfg->current_bb->add_IRInstr(new IRInstrNot(cfg->current_bb, "!reg"));
+    }
+    else if (ctx->opU()->PLUS())
+    {
+        if (e.is<int>()) {
+            int result = e.as<int>();
+            return (int) (result);
+        }
     }
 
     return nullptr;
@@ -226,7 +237,7 @@ antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx)
 
     auto parent = ctx->parent; // If we come from add sub mul or div context we dont need to load the value
                                 // in reg, because we will compute directly whithout using reg
-    if(!dynamic_cast<ifccParser::ExprAddSubContext *>(parent) && !dynamic_cast<ifccParser::ExprMulDivModContext *>(parent)){
+    if(!dynamic_cast<ifccParser::ExprAddSubContext *>(parent) && !dynamic_cast<ifccParser::ExprMulDivModContext *>(parent) && !dynamic_cast<ifccParser::ExprUnaryContext *>(parent)){
         // Add a load constant instruction
         cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", retval));
     }
@@ -435,8 +446,14 @@ antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
     //Obtention des params
     for (auto expression : ctx->liste_param()->expr()) {
         string tmp = cfg->create_new_tempvar();
-        this->visit(expression);
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+        auto e = this->visit(expression);
+        if (e.is<int>()) {
+            int result = e.as<int>();
+            cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp, result));
+        }
+        else{
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+        }
         params.push_back(tmp);
     }
 
@@ -453,13 +470,25 @@ antlrcpp::Any Linearize::visitExprCompRelationnal(ifccParser::ExprCompRelationna
     ifccParser::ExprContext *ctxExpr1 = ctx->expr(0);
     ifccParser::ExprContext *ctxExpr2 = ctx->expr(1);
 
-    // Visit the second expression
-    this->visit(ctxExpr2);
     string tmp1 = cfg->create_new_tempvar();
-    // Add a copy instruction to store the result in a temporary variable
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+    auto e2 = this->visit(ctxExpr2);
+    if (e2.is<int>()) {
+        int result = e2.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp1, result));
+    }
+    else{
+        // Add a copy instruction to store the result in a temporary variable
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+    }
+    
     // Visit the first expression
-    this->visit(ctxExpr1);
+
+    auto e1 = this->visit(ctxExpr1);
+    if (e1.is<int>()) {
+        int result = e1.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", result));
+    }
+
 
     if (ctxComp->INF())
     {
@@ -481,12 +510,24 @@ antlrcpp::Any Linearize::visitExprCompEqual(ifccParser::ExprCompEqualContext *ct
     ifccParser::ExprContext *ctxExpr2 = ctx->expr(1);
 
     // Visit the second expression
-    this->visit(ctxExpr2);
     string tmp1 = cfg->create_new_tempvar();
-    // Add a copy instruction to store the result in a temporary variable
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+    auto e2 = this->visit(ctxExpr2);
+    if (e2.is<int>()) {
+        int result = e2.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp1, result));
+    }
+    else{
+        // Add a copy instruction to store the result in a temporary variable
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+    }
+    
     // Visit the first expression
-    this->visit(ctxExpr1);
+
+    auto e1 = this->visit(ctxExpr1);
+    if (e1.is<int>()) {
+        int result = e1.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", result));
+    }
 
     if (ctxComp->EQ())
     {
@@ -505,9 +546,16 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx)
 {
     BasicBlock *bb_init = cfg->current_bb;
     // Visit the condition expression
-    this->visit(ctx->expr());
+
+    auto e1 = this->visit(ctx->expr());
     cfg->current_bb->test_var_name = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    if (e1.is<int>()) {
+        int result = e1.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, cfg->current_bb->test_var_name, result));
+    }
+    else{
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    }
     // Create a new basic block for the then part
     BasicBlock *bb_then = new BasicBlock(cfg, cfg->current_bb->label + "_then");
     cfg->add_bb(bb_then);
@@ -564,9 +612,16 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx)
 antlrcpp::Any Linearize::visitElif_stmt(ifccParser::Elif_stmtContext *ctx)
 {
     // Visit the condition expression
-    this->visit(ctx->expr());
+
+    auto e1 = this->visit(ctx->expr());
     cfg->current_bb->test_var_name = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    if (e1.is<int>()) {
+        int result = e1.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, cfg->current_bb->test_var_name, result));
+    }
+    else{
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    }
     // Create a new basic block for the then part
     BasicBlock *bb_then = new BasicBlock(cfg, cfg->current_bb->label + "_then");
     cfg->add_bb(bb_then);
@@ -620,9 +675,16 @@ antlrcpp::Any Linearize::visitElse_stmt(ifccParser::Else_stmtContext *ctx)
 
 antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
     // Visit the condition expression
-    this->visit(ctx->expr(0));
+    auto e1 = this->visit(ctx->expr(0));
     cfg->current_bb->test_var_name = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    if (e1.is<int>()) {
+        int result = e1.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, cfg->current_bb->test_var_name, result));
+    }
+    else{
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    }
+
     BasicBlock *bb_and = new BasicBlock(cfg, cfg->current_bb->label + "_and");
     cfg->add_bb(bb_and);
     BasicBlock *bb_false = new BasicBlock(cfg, cfg->current_bb->label + "_false");
@@ -638,9 +700,16 @@ antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
     cfg->current_bb = bb_and;
 
     // Visit the condition expression
-    this->visit(ctx->expr(1));
+    auto e2 = this->visit(ctx->expr(1));
     cfg->current_bb->test_var_name = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    if (e2.is<int>()) {
+        int result = e2.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, cfg->current_bb->test_var_name, result));
+    }
+    else{
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    }
+
     bb_end->exit_true = cfg->current_bb->exit_true;
     bb_end->exit_false = cfg->current_bb->exit_false;
     cfg->current_bb->exit_true = bb_true;
@@ -655,8 +724,15 @@ antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
 
 antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
     // Visit the condition expression
-    this->visit(ctx->expr(0));
+    auto e1 = this->visit(ctx->expr(0));
     cfg->current_bb->test_var_name = cfg->create_new_tempvar();
+    if (e1.is<int>()) {
+        int result = e1.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, cfg->current_bb->test_var_name, result));
+    }
+    else{
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    }
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     BasicBlock *bb_or = new BasicBlock(cfg, cfg->current_bb->label + "_or");
     cfg->add_bb(bb_or);
@@ -673,9 +749,15 @@ antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
     cfg->current_bb = bb_or;
 
     // Visit the condition expression
-    this->visit(ctx->expr(1));
+    auto e2 = this->visit(ctx->expr(1));
     cfg->current_bb->test_var_name = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    if (e2.is<int>()) {
+        int result = e2.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, cfg->current_bb->test_var_name, result));
+    }
+    else{
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    }
     bb_end->exit_true = cfg->current_bb->exit_true;
     bb_end->exit_false = cfg->current_bb->exit_false;
     cfg->current_bb->exit_true = bb_true;
@@ -707,9 +789,16 @@ antlrcpp::Any Linearize::visitWhile_stmt(ifccParser::While_stmtContext *ctx)
     cfg->current_bb = bb_test;
 
     // Visit the condition expression
-    this->visit(ctx->expr());
+    auto e1 = this->visit(ctx->expr());
     cfg->current_bb->test_var_name = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    if (e1.is<int>()) {
+        int result = e1.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, cfg->current_bb->test_var_name, result));
+    }
+    else{
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
+    }
+    
 
     cfg->current_bb = bb_body;
     // Visit the body of the while loop
@@ -780,7 +869,7 @@ antlrcpp::Any Linearize::visitExprSuffixe(ifccParser::ExprSuffixeContext *ctx)
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", tmp1));
     }
 
-    return 0;
+    return nullptr;
 }
 
 antlrcpp::Any Linearize::visitExprPrefixe(ifccParser::ExprPrefixeContext *ctx) {
@@ -822,64 +911,253 @@ antlrcpp::Any Linearize::visitExprPrefixe(ifccParser::ExprPrefixeContext *ctx) {
         this->visit(ctx->lvalue());
     }
 
-    return 0;
+    return nullptr;
 }
 antlrcpp::Any Linearize::visitExprTable(ifccParser::ExprTableContext *ctx)
 {
-    this->visit(ctx->expr());
-    string baseVarName =cfg->getVarName( ctx->VAR()->getText(),scopeString);
+
+    auto e1 = this->visit(ctx->expr());
     string tmpIndex = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpIndex, "!reg"));
+    if (e1.is<int>()) {
+        int result = e1.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmpIndex, result));
+    }
+    else{
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpIndex, "!reg"));
+    }
+    string baseVarName =cfg->getVarName( ctx->VAR()->getText(),scopeString);
 
     cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, tmpIndex, baseVarName));
     return 0;
 }
 
+
+
 antlrcpp::Any Linearize::visitVarAffectation(ifccParser::VarAffectationContext *ctx) {
     string varName = cfg->getVarName(ctx->VAR()->getText(), scopeString);
-    this->visit(ctx->expr());
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
+    auto e1 = this->visit(ctx->expr());
+    if (e1.is<int>()) {
+        int result = e1.as<int>();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, varName, result));
+    }
+    else{
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
+    }
     return 0;
 }
+
+
+
 antlrcpp::Any Linearize::visitExprShift(ifccParser::ExprShiftContext *ctx) {
     this->visit(ctx->expr(0));
     string tmp = cfg->create_new_tempvar();
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
     this->visit(ctx->expr(1));
 
+
+    int resultLeft, resultRight;
+    bool leftConst = false , rightConst= false;
+    string tmp1;
+    
+    auto e2 = this->visit(ctx->expr()[1]);
+    // If we get a constant value
+    if (e2.is<int>()) {
+        resultRight = e2.as<int>();
+        rightConst= true;
+    }
+    else{
+        tmp1 = cfg->create_new_tempvar();
+        // Add a copy instruction to store the result in a temporary variable
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+    }
+
+    auto e1 = this->visit(ctx->expr()[0]);
+    if (e1.is<int>()) {
+        resultLeft = e1.as<int>();
+        leftConst= true;
+    }
+    
+
+    // if (rightConst && resultRight==0 ) // If .. + or - 0
+    // {
+    //     if (!leftConst) // if a + or - 0 (value of a already in reg)
+    //     {
+    //         return nullptr;
+    //     }
+        
+    // }
+    // if (leftConst && resultLeft == 0)
+    // {
+    //     if (ctx->opA()->PLUS() && !rightConst) // If  0+a // we just put a that is in tmp1 in reg 
+    //     {
+    //         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb,"!reg" ,tmp1 ));
+    //         return nullptr;
+    //     }
+        
+    // }
+    
+    if (leftConst && rightConst) // If we have both constant
+    {
+        if (ctx->opS()->SHL()) return (int) resultLeft <<  resultRight;
+        else if (ctx->opS()->SHR()) return (int) resultLeft >>  resultRight;
+        
+    }
+    else if (leftConst && !rightConst) // if only leftside is a constant  we put the result in reg
+    {
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", resultLeft)); 
+   
+    }
+    else if (!leftConst && rightConst)  // if only rightside is a constant  we put the result in tmp1
+    {
+        tmp1 = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp1, resultRight));
+        
+    }
+
+
     if (ctx->opS()->SHL()) {
-        cfg->current_bb->add_IRInstr(new IRInstrSHL(cfg->current_bb, "!reg", tmp));
+        cfg->current_bb->add_IRInstr(new IRInstrSHL(cfg->current_bb, tmp1, "!reg"));
     }
     else if (ctx->opS()->SHR()) {
-        cfg->current_bb->add_IRInstr(new IRInstrSHR(cfg->current_bb, "!reg", tmp));
+        cfg->current_bb->add_IRInstr(new IRInstrSHR(cfg->current_bb, tmp1, "!reg"));
     }
 
     return nullptr;
 }
 
 antlrcpp::Any Linearize::visitExprAndBit(ifccParser::ExprAndBitContext *ctx) {
-    this->visit(ctx->expr(0));
-    string tmp = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
-    this->visit(ctx->expr(1));
-    cfg->current_bb->add_IRInstr(new IRInstrAndBit(cfg->current_bb, tmp, "!reg"));
+
+    int resultLeft, resultRight;
+    bool leftConst = false , rightConst= false;
+    string tmp1;
+    
+    auto e1 = this->visit(ctx->expr(0));
+    // If we get a constant value
+    if (e1.is<int>()) {
+        resultLeft = e1.as<int>();
+        leftConst= true;
+    }
+    else{
+        tmp1 = cfg->create_new_tempvar();
+        // Add a copy instruction to store the result in a temporary variable
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+    }
+
+    auto e2 = this->visit(ctx->expr(1));
+    if (e2.is<int>()) {
+        resultRight = e2.as<int>();
+        rightConst= true;
+    }
+
+    if (leftConst && rightConst) // If we have both constant
+    {
+        return resultLeft & resultRight;
+        
+    }
+    else if (!leftConst && rightConst) // if only rightside  is a constant  we put the result in reg
+    {
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", resultRight)); 
+   
+    }
+    else if (leftConst && !rightConst)  // if only leftside is a constant  we put the result in tmp1
+    {
+        tmp1 = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp1, resultLeft));
+        
+    }
+
+
+    cfg->current_bb->add_IRInstr(new IRInstrAndBit(cfg->current_bb, tmp1, "!reg"));
     return nullptr;
 }
 
 antlrcpp::Any Linearize::visitExprOrBit(ifccParser::ExprOrBitContext *ctx) {
-    this->visit(ctx->expr(0));
-    string tmp = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
-    this->visit(ctx->expr(1));
-    cfg->current_bb->add_IRInstr(new IRInstrOrBit(cfg->current_bb, tmp, "!reg"));
+
+    int resultLeft, resultRight;
+    bool leftConst = false , rightConst= false;
+    string tmp1;
+    
+    auto e1 = this->visit(ctx->expr(0));
+    // If we get a constant value
+    if (e1.is<int>()) {
+        resultLeft = e1.as<int>();
+        leftConst= true;
+    }
+    else{
+        tmp1 = cfg->create_new_tempvar();
+        // Add a copy instruction to store the result in a temporary variable
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+    }
+
+    auto e2 = this->visit(ctx->expr(1));
+    if (e2.is<int>()) {
+        resultRight = e2.as<int>();
+        rightConst= true;
+    }
+
+    if (leftConst && rightConst) // If we have both constant
+    {
+        return resultLeft | resultRight;
+        
+    }
+    else if (!leftConst && rightConst) // if only rightside  is a constant  we put the result in reg
+    {
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", resultRight)); 
+   
+    }
+    else if (leftConst && !rightConst)  // if only leftside is a constant  we put the result in tmp1
+    {
+        tmp1 = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp1, resultLeft));
+        
+    }
+
+    cfg->current_bb->add_IRInstr(new IRInstrOrBit(cfg->current_bb, tmp1, "!reg"));
+
     return nullptr;
 }
 
 antlrcpp::Any Linearize::visitExprXorBit(ifccParser::ExprXorBitContext *ctx) {
-    this->visit(ctx->expr(0));
-    string tmp = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
-    this->visit(ctx->expr(1));
-    cfg->current_bb->add_IRInstr(new IRInstrXorBit(cfg->current_bb, tmp, "!reg"));
+
+    int resultLeft, resultRight;
+    bool leftConst = false , rightConst= false;
+    string tmp1;
+    
+    auto e1 = this->visit(ctx->expr(0));
+    // If we get a constant value
+    if (e1.is<int>()) {
+        resultLeft = e1.as<int>();
+        leftConst= true;
+    }
+    else{
+        tmp1 = cfg->create_new_tempvar();
+        // Add a copy instruction to store the result in a temporary variable
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+    }
+
+    auto e2 = this->visit(ctx->expr(1));
+    if (e2.is<int>()) {
+        resultRight = e2.as<int>();
+        rightConst= true;
+    }
+
+    if (leftConst && rightConst) // If we have both constant
+    {
+        return resultLeft ^ resultRight;
+        
+    }
+    else if (!leftConst && rightConst) // if only rightside  is a constant  we put the result in reg
+    {
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", resultRight)); 
+   
+    }
+    else if (leftConst && !rightConst)  // if only leftside is a constant  we put the result in tmp1
+    {
+        tmp1 = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp1, resultLeft));
+        
+    }
+
+    cfg->current_bb->add_IRInstr(new IRInstrXorBit(cfg->current_bb, tmp1, "!reg"));
     return nullptr;
 }
