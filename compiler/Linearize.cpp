@@ -303,7 +303,8 @@ antlrcpp::Any Linearize::visitExprMulDivMod(ifccParser::ExprMulDivModContext *ct
         }
         
     }
-    
+
+
 
     if (leftConst && rightConst) // If we have both constant
     {
@@ -317,6 +318,11 @@ antlrcpp::Any Linearize::visitExprMulDivMod(ifccParser::ExprMulDivModContext *ct
             if (resultRight == 0)
             {
                 cerr << "Division par 0" << endl; 
+                // tmp1 = cfg->create_new_tempvar();
+                // cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp1, resultRight));
+                // cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", resultLeft));
+                // cfg->current_bb->add_IRInstr(new IRInstrDiv(cfg->current_bb, tmp1));
+                // return nullptr;
                 exit(1);
             } 
             return (int) (resultLeft / resultRight);
