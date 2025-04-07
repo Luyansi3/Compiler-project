@@ -1,4 +1,4 @@
 int main() {
     int a[] = {1, 2, 3};
-    return 0;
+    return a[2];
 }

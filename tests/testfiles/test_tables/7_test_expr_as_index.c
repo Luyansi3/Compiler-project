@@ -4,5 +4,5 @@ int main()
     int b=3;
     int a[10];
     a[n+b]=2;
-    return 0;
+    return a[n+b];
 }

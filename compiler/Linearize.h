@@ -28,7 +28,6 @@ public:
 
     virtual antlrcpp ::Any visitLvalueAffectation(ifccParser::LvalueAffectationContext *ctx) override;
     virtual antlrcpp::Any visitTableAffectation(ifccParser::TableAffectationContext *ctx) override;
-    virtual antlrcpp::Any visitTableElementAffectation(ifccParser::TableElementAffectationContext*ctx)override;
     virtual antlrcpp::Any visitExprVar(ifccParser::ExprVarContext *ctx) override;
     virtual antlrcpp::Any visitExprConst(ifccParser::ExprConstContext *ctx) override;
     virtual antlrcpp::Any visitLvalue(ifccParser::LvalueContext *ctx) override;

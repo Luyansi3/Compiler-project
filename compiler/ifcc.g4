@@ -38,8 +38,7 @@ else_stmt: ELSE (instruction | block) ;
 while_stmt: WHILE OPENPAR expr CLOSEPAR (instruction | block) ;
 
 affectation: lvalue EQUAL expr                                             #LvalueAffectation
-           | VAR OPENBRACKET (constante|) CLOSEBRACKET EQUAL  array_litteral   #TableAffectation
-           | VAR OPENBRACKET expr CLOSEBRACKET EQUAL expr                   #TableElementAffectation;
+           | VAR OPENBRACKET (constante|) CLOSEBRACKET EQUAL  array_litteral   #TableAffectation;
 
 array_litteral : OPENCROCHET (expr (COMMA expr)* | ) CLOSECROCHET;
 return_stmt: RETURN expr ;
