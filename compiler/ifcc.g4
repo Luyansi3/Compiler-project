@@ -44,6 +44,8 @@ return_stmt: RETURN expr ;
 lvalue: VAR ;
 
 expr: OPENPAR expr CLOSEPAR #ExprPar
+    | lvalue opD            #ExprSuffixe
+    | opD lvalue            #ExprPrefixe
     | opU expr              #ExprUnary
     | expr opM expr         #MulDiv
     | expr opA expr         #AddSub
@@ -56,6 +58,8 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | VAR                   #ExprVar
     | constante             #ExprConst ;
 
+opD: PLUSPLUS | MOINSMOINS;
+
 
 liste_param: expr (COMMA expr)*
             | ;
@@ -67,7 +71,7 @@ call: VAR OPENPAR liste_param CLOSEPAR ;
 compRelationnal: INF | SUP ;
 compEqual: EQ | NEQ ;
 
-opU: MINUS | NOT;
+opU: MINUS | NOT | PLUS;
 
 opA: PLUS | MINUS ;
 opM: DIV | MULT ;
@@ -87,6 +91,8 @@ ELSE: 'else';
 VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
 CONSTINT : [0-9]+ ;
 CONSTCHAR : '\''[a-zA-Z0-9]'\'' ;
+PLUSPLUS: '++';
+MOINSMOINS: '--';
 EQ: '==';
 NEQ: '!=';
 INF: '<';
