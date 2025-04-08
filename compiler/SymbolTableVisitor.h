@@ -34,7 +34,7 @@ public:
     virtual antlrcpp::Any visitAffectation(ifccParser::AffectationContext *ctx) override;
     virtual antlrcpp::Any visitTableAffectation(ifccParser::TableAffectationContext *ctx) override;
     virtual antlrcpp::Any visitVarAffectation(ifccParser::VarAffectationContext *ctx) override;
-    virtual antlrcpp::Any visitTableDeclaration(ifccParser::TableDeclarationContext *ctx) override;
+    virtual antlrcpp::Any visitClassicDeclaration(ifccParser::ClassicDeclarationContext *ctx) override;
     virtual antlrcpp::Any visitArray_litteral(ifccParser::Array_litteralContext *ctx) override;
     int getIndex(){return index;}
 

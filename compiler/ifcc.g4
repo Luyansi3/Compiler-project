@@ -26,7 +26,7 @@ decl_param : type VAR ;
 
 declaration: type decl_element (COMMA decl_element)* ;
 
-decl_element: VAR (OPENBRACKET constante CLOSEBRACKET)?                         # TableDeclaration
+decl_element: VAR (OPENBRACKET constante CLOSEBRACKET)?                         # ClassicDeclaration
             | VAR OPENBRACKET (constante)? CLOSEBRACKET EQUAL array_litteral    # TableAffectation
             | VAR EQUAL expr                                                    # VarAffectation ;
 

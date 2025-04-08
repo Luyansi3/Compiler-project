@@ -224,7 +224,7 @@ void IRInstrMem::gen_asm(ostream &o)
     o << "    movslq %ecx, %rcx\n";
 
     o << "    movl " << srcReg << ", %eax" << "\n";
-
+    o << "    neg %rcx\n";
     // Step 3: Store %eax into displacement(%rbp, %ecx, 4)
     o << "    movl %eax, " << displacement << "(%rbp, %rcx, 4)" << "\n";
 }
@@ -244,7 +244,8 @@ void IRInstrCopyMem::gen_asm(ostream &o)
 
     // Étendre %ecx (32 bits) en %rcx (64 bits)
     o << "    movslq %ecx, %rcx\n";
-    o << "movl " << displacement << "(%rbp," << "%rcx,4), %eax\n";
+    o << "    neg %rcx\n";
+    o << "movl " << displacement << "(%rbp," << "%rcx, 4), %eax\n";
 }
 
 void IRInstrJump::gen_asm(ostream &o)
