@@ -75,6 +75,18 @@ antlrcpp::Any Linearize::visitTableAffectation(ifccParser::TableAffectationConte
         i++;
     }
 
+    while (ctx->constante() && i < stoi(ctx->constante()->getText()))
+    {
+        string tmpValue = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmpValue, 0)); // stocker valeur dans tmpValue
+
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", i)); // charger i dans !reg
+
+        // Utiliser tmpValue (la valeur) et !reg (l'index)
+        cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, tmpValue, "!reg", baseVarName));
+        i++;
+    }
+
     return 0;
 }
 
