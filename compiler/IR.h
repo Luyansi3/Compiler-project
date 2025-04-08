@@ -164,17 +164,6 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
-class IRInstrExit : public IRInstr
-{
-private:
-    string src;
-
-public:
-    IRInstrExit(BasicBlock *bb, string src) : IRInstr(bb), src(src)
-    {
-    }
-    virtual void gen_asm(ostream &o) override;
-};
 
 class IRInstrJump : public IRInstr
 {

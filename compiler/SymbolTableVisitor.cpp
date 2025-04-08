@@ -102,14 +102,17 @@ antlrcpp::Any SymbolTableVisitor::visitTableAffectation(ifccParser::TableAffecta
 {
     string varName = ctx->VAR()->getText();
     int tableSize = 0;
+    int exprListSize = (ctx->array_litteral()->expr()).size();
     if (ctx->constante())
     {
         tableSize = stoi(ctx->constante()->getText());
+        if (exprListSize > tableSize)
+        {
+            cerr << "Warning : Trop d'élément dans le tableau " << varName << endl;
+        }
+        
     }
-    else
-    {
-        tableSize = ctx->array_litteral()->expr().size();
-    }
+
 
     FlagVar flagVar;
 
@@ -132,14 +135,10 @@ antlrcpp::Any SymbolTableVisitor::visitTableAffectation(ifccParser::TableAffecta
         exit(1);
     }
 
-    int exprListSize = (ctx->array_litteral()->expr()).size();
     if (ctx->constante())
     {
-        int constante = stoi(ctx->constante()->getText());
-
-        for (int i = 0; i < min(constante, exprListSize); i++)
+        for (int i = 0; i < min(tableSize, exprListSize); i++)
         {
-
             symbolTableVar[var].affected = true;
         }
     }
@@ -323,7 +322,10 @@ antlrcpp::Any SymbolTableVisitor::visitClassicDeclaration(ifccParser::ClassicDec
         val=stoi(ctx->constante()->getText());
         this->index-=(val-1)*4;
     }
-    index -= 4;
+    else{
+        index -= 4;
+    }
+    
     string var = varName + "!" + scopeString; // create the right format for the variable to store it in the table
                                                 // like this each variable+scope is unique
 
@@ -349,7 +351,7 @@ antlrcpp::Any SymbolTableVisitor::visitVarAffectation(ifccParser::VarAffectation
     flagVar.used = false;
     flagVar.functionName = nameCurrentFunction;
     flagVar.varName = varName;
-    this->index -= 4; /// ***** bizarre dans le cas quand on check a[i] (a[i] a déjà sa memoire et on va rajouter -4 ?)
+    this->index -= 4;
     string var = varName + "!" + scopeString; // create the right format for the variable to store it in the table
                                                 // like this each variable+scope is unique
 

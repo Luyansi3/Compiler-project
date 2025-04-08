@@ -187,19 +187,6 @@ void IRInstrCmpSUP::gen_asm(ostream &o)
     o << "    movzbl %al, %eax\n";
 }
 
-void IRInstrExit::gen_asm(ostream &o)
-{
-    // o << "Exit_block :" << endl;
-    //     o << "    movl" << src1 << ", " << src2 << "\n";
-    //     o << "    popq %rbp\n";
-    //     o << "    ret\n";
-    string source = this->bb->cfg->IR_reg_to_asm(src);
-
-    o << "    movl " << source << ", %eax" << "\n";
-    o << "    popq %rbp\n";
-    o << "    ret\n";
-}
-
 void IRInstrMem::gen_asm(ostream &o)
 {
     string srcReg = bb->cfg->IR_reg_to_asm(src);     // value to store, in memory (-16(%rbp))

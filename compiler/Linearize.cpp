@@ -52,8 +52,6 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
 {
     // // Visit the expression and the left-hand side of the assignment
     this->visit(ctx->expr());
-    // // mov !reg , !tmp
-    // this->visit(ctx->lvalue());
     this->visit(ctx->lvalue());
     return 0;
 }
@@ -90,29 +88,6 @@ antlrcpp::Any Linearize::visitTableAffectation(ifccParser::TableAffectationConte
     return 0;
 }
 
-// antlrcpp::Any Linearize::visitTableElementAffectation(ifccParser::TableElementAffectationContext *ctx)
-// {
-//     string baseVarName=ctx->VAR()->getText();
-//     auto expr1=ctx->expr()[0];
-//     auto expr2=ctx->expr()[1];
-//     this->visit(expr2);
-//     string resultVar=cfg->create_new_tempvar();
-//     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, resultVar, "!reg"));
-//     this->visit(expr1);
-//     cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, resultVar, "!reg", baseVarName));
-//     return 0;
-
-
-// }
-
-
-// antlrcpp::Any Linearize::visitArray_litteral(ifccParser::Array_litteralContext *ctx)
-// {
-//     for (auto &expression : ctx->expr())
-//     {
-//         this->visit(expression);
-//     }
-// }
 
 // Visit a variable expression
 antlrcpp::Any Linearize::visitExprVar(ifccParser::ExprVarContext *ctx)
@@ -632,8 +607,6 @@ antlrcpp::Any Linearize::visitExprPrefixe(ifccParser::ExprPrefixeContext *ctx) {
 }
 antlrcpp::Any Linearize::visitExprTable(ifccParser::ExprTableContext *ctx)
 {
-    // string tmpValue = cfg->create_new_tempvar();
-    // cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpValue, "!reg"));
     this->visit(ctx->expr());
     string baseVarName =cfg->getVarName( ctx->VAR()->getText(),scopeString);
     string tmpIndex = cfg->create_new_tempvar();
