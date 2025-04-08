@@ -1,4 +1,5 @@
 #include "IR.h"
+#include "SymbolTableVisitor.h" // Include the header for SymbolTableVisitor
 
 // Generate assembly code for loading a constant
 void IRInstrLDConst::gen_asm(ostream &o)
@@ -23,55 +24,54 @@ void IRInstrNeg::gen_asm(ostream &o)
 }
 
 // Generate assembly code for the function prologue
-void IRInstrPrologue::gen_asm(ostream &o){
-    //Prologue classqieu
-    o<< "    pushq %rbp \n";
-    o<< "    movq %rsp, %rbp\n";
+void IRInstrPrologue::gen_asm(ostream &o)
+{
+    // Prologue classqieu
+    o << "    pushq %rbp \n";
+    o << "    movq %rsp, %rbp\n";
 
-    //Allouer la mémoire
+    // Allouer la mémoire
     int offset = -bb->cfg->getNextFreeSymbolIndex();
-    offset += (16 - ((offset)%16));
+    offset += (16 - ((offset) % 16));
     o << "    subq $" << offset << ", " << "%rsp\n";
 
-    //Recuperation des 6 premiers params
-    for (int i = 1; i <= bb->cfg->nbParams && i < 7; i++) {
-        if (i==1)
-            o << "    movl" << " " << "%edi" << ", " << -4*i <<"(%rbp)" <<"\n";
-        else if (i==2)
-            o << "    movl" << " " << "%esi" << ", " << -4*i <<"(%rbp)" <<"\n";
-        else if (i==3)
-            o << "    movl" << " " << "%edx" << ", " << -4*i <<"(%rbp)" <<"\n";
-        else if (i==4)
-            o << "    movl" << " " << "%ecx" << ", " << -4*i <<"(%rbp)" <<"\n";
-        else if (i==5)
-            o << "    movl" << " " << "%r8d" << ", " << -4*i <<"(%rbp)" <<"\n";
-        else if (i==6)
-            o << "    movl" << " " << "%r9d" << ", " << -4*i <<"(%rbp)" <<"\n";
+    // Recuperation des 6 premiers params
+    for (int i = 1; i <= bb->cfg->nbParams && i < 7; i++)
+    {
+        if (i == 1)
+            o << "    movl" << " " << "%edi" << ", " << -4 * i << "(%rbp)" << "\n";
+        else if (i == 2)
+            o << "    movl" << " " << "%esi" << ", " << -4 * i << "(%rbp)" << "\n";
+        else if (i == 3)
+            o << "    movl" << " " << "%edx" << ", " << -4 * i << "(%rbp)" << "\n";
+        else if (i == 4)
+            o << "    movl" << " " << "%ecx" << ", " << -4 * i << "(%rbp)" << "\n";
+        else if (i == 5)
+            o << "    movl" << " " << "%r8d" << ", " << -4 * i << "(%rbp)" << "\n";
+        else if (i == 6)
+            o << "    movl" << " " << "%r9d" << ", " << -4 * i << "(%rbp)" << "\n";
     }
-    
-    //Recuperation sur la pile des autres params
-    for (int i = 7; i<= bb->cfg->nbParams ; i++) {
-        o << "    movl" << " " << 16+8*(i-7) << "(%rbp)" << ", " << "%eax" << "\n"; //A regler le probleme des offsets.
-        o << "    movl" << " " << "%eax" << ", " <<  -4*i << "(%rbp)" << "\n";
+
+    // Recuperation sur la pile des autres params
+    for (int i = 7; i <= bb->cfg->nbParams; i++)
+    {
+        o << "    movl" << " " << 16 + 8 * (i - 7) << "(%rbp)" << ", " << "%eax" << "\n"; // A regler le probleme des offsets.
+        o << "    movl" << " " << "%eax" << ", " << -4 * i << "(%rbp)" << "\n";
     }
-        
-
-    
-
 }
 
 // Generate assembly code for the function epilogue
-void IRInstrEpilogue::gen_asm(ostream &o){
+void IRInstrEpilogue::gen_asm(ostream &o)
+{
     string source = this->bb->cfg->IR_reg_to_asm("!returnVal");
 
     o << "    movl " << source << ", %eax" << "\n";
-    //Remettre rsp à son état initial
+    // Remettre rsp à son état initial
     int offset = -bb->cfg->getNextFreeSymbolIndex();
-    offset += (16 - ((offset)%16));
+    offset += (16 - ((offset) % 16));
     o << "    addq $" << offset << ", " << "%rsp\n";
 
-
-    o<< "    popq %rbp\n";
+    o << "    popq %rbp\n";
     o << "    ret\n";
 }
 
@@ -107,14 +107,13 @@ void IRInstrSub::gen_asm(ostream &o)
     o << "    subl " << source1 << ", " << source2 << "\n";
 }
 
-void IrInstrCall::gen_asm(ostream &o) {
-    bool non_aligned = params.size()>6 && params.size()%2;
+void IrInstrCall::gen_asm(ostream &o)
+{
+    bool non_aligned = params.size() > 6 && params.size() % 2;
     int pushed = 0;
 
-
-
-
-    for (int i = 0; i<6 && i<params.size(); i++) {
+    for (int i = 0; i < 6 && i < params.size(); i++)
+    {
         string param = this->bb->cfg->IR_reg_to_asm(params[i]);
         if (i == 0)
             o << "    movl" << " " << param << ", " << "%edi" << "\n";
@@ -130,7 +129,8 @@ void IrInstrCall::gen_asm(ostream &o) {
             o << "    movl" << " " << param << ", " << "%r9d" << "\n";
     }
 
-    for (int i = params.size()-1;i>=6; i--) {
+    for (int i = params.size() - 1; i >= 6; i--)
+    {
         pushed++;
         string param = this->bb->cfg->IR_reg_to_asm(params[i]);
         o << "    pushq" << " " << param << "\n";
@@ -139,14 +139,12 @@ void IrInstrCall::gen_asm(ostream &o) {
     if (non_aligned)
         o << "    subq $8, " << "%rsp\n";
 
-
     o << "    call" << " " << label << "\n";
 
     if (non_aligned)
-        o << "    addq $" << 8*(pushed+1) <<", " << "%rsp\n";
+        o << "    addq $" << 8 * (pushed + 1) << ", " << "%rsp\n";
     else if (pushed)
-        o << "    addq $" << 8*pushed <<", " << "%rsp\n";
-    
+        o << "    addq $" << 8 * pushed << ", " << "%rsp\n";
 }
 
 // Generate assembly code for comparison
@@ -202,69 +200,53 @@ void IRInstrExit::gen_asm(ostream &o)
     o << "    ret\n";
 }
 
-
 void IRInstrMem::gen_asm(ostream &o)
 {
-    string srcReg = bb->cfg->IR_reg_to_asm(src);     // Valeur à stocker
-    string indexReg = bb->cfg->IR_reg_to_asm(index); // Index (normalement !reg = %eax)
-    string baseStr = bb->cfg->IR_reg_to_asm(base);   // Base (ex: -64(%rbp))
+    string srcReg = bb->cfg->IR_reg_to_asm(src);     // value to store, in memory (-16(%rbp))
+    string indexReg = bb->cfg->IR_reg_to_asm(index); // memory containing index value (-24(%rbp))
+    string baseStr = bb->cfg->IR_reg_to_asm(base);   // base address (-64(%rbp))
+
     int displacement = 0;
     string baseReg;
     size_t pos = baseStr.find('(');
-    if (pos != string::npos)
-    {
-        try
-        {
-            displacement = stoi(baseStr.substr(0, pos));
-        }
-        catch (...)
-        {
-            displacement = 0;
-        }
-        baseReg = baseStr.substr(pos);
-    }
+
+    if (pos != string::npos && pos > 0)
+        displacement = stoi(baseStr.substr(0, pos));
     else
-    {
-        baseReg = baseStr;
-    }
-    o << "push %rax\n";
-    o << "movl " << srcReg << ", %eax\n";
-    o << "pop %rcx\n";
-    o << "movl %eax, " << displacement << baseReg.substr(0, baseReg.size() - 1) << "," << "%rcx,4)\n";
+        displacement = 0; // Just in case
+
+    // // Step 1: Load the index from memory into %ecx
+    // o << "    movl " << indexReg << ", %rcx" << "\n";
+    // Charger l'index (valeur de i) en %ecx (32 bits)
+    o << "    movl " << indexReg << ", %ecx\n";
+
+    // Étendre %ecx (32 bits) en %rcx (64 bits)
+    o << "    movslq %ecx, %rcx\n";
+
+    o << "    movl " << srcReg << ", %eax" << "\n";
+
+    // Step 3: Store %eax into displacement(%rbp, %ecx, 4)
+    o << "    movl %eax, " << displacement << "(%rbp, %rcx, 4)" << "\n";
 }
+
 void IRInstrCopyMem::gen_asm(ostream &o)
 {
-    string destReg = bb->cfg->IR_reg_to_asm(src);    // Destination dans !reg = %eax
-    string indexReg = bb->cfg->IR_reg_to_asm(index); // Index (normalement !reg = %eax)
-    string baseStr = bb->cfg->IR_reg_to_asm(base);   // Base (ex: -64(%rbp))
+    string destReg = bb->cfg->IR_reg_to_asm(src);    // Not really "dest", it's where to store value (%eax)
+    string indexReg = bb->cfg->IR_reg_to_asm(index); // index is memory, like -16(%rbp)
+    string baseStr = bb->cfg->IR_reg_to_asm(base);   // base address of array, like -64(%rbp)
+
     int displacement = 0;
-    string baseReg;
     size_t pos = baseStr.find('(');
-    if (pos != string::npos)
-    {
-        try
-        {
-            displacement = stoi(baseStr.substr(0, pos));
-        }
-        catch (...)
-        {
-            displacement = 0;
-        }
-        baseReg = baseStr.substr(pos); // Ex: "(%rbp)"
-    }
-    else
-    {
-        baseReg = baseStr;
-    }
+    displacement = stoi(baseStr.substr(0, pos));
+    // o << "movl " << indexReg << ", %rcx\n";
+    // Charger l'index (valeur de i) en %ecx (32 bits)
+    o << "    movl " << indexReg << ", %ecx\n";
 
-    // 🔥 même principe qu'avant : sauvegarder l'index, puis faire l'accès mémoire
-    o << "push %rax\n";                    // Sauver l'index
-    o << "movl " << destReg << ", %eax\n"; // Charger l'index dans %eax (si besoin... ici à corriger peut-être selon usage)
-    o << "pop %rcx\n";                     // Restaurer l'index dans %rcx
-
-    // 🚀 Maintenant, lire a[i] dans %eax
-    o << "movl " << displacement << baseReg.substr(0, baseReg.size() - 1) << "," << "%rcx,4), %eax\n";
+    // Étendre %ecx (32 bits) en %rcx (64 bits)
+    o << "    movslq %ecx, %rcx\n";
+    o << "movl " << displacement << "(%rbp," << "%rcx,4), %eax\n";
 }
+
 void IRInstrJump::gen_asm(ostream &o)
 {
     o << "    jmp " << label << "\n";
@@ -278,7 +260,6 @@ void IRInstrNot::gen_asm(ostream &o)
     o << "    movsbl %al, %eax" << "\n";
 }
 
-   
 // Generate assembly code for a basic block and its instructions
 void BasicBlock::gen_asm(ostream &o)
 {
@@ -295,7 +276,8 @@ void BasicBlock::gen_asm(ostream &o)
         o << "    je " << exit_false->label << "\n";
         o << "    jmp " << exit_true->label << "\n";
     }
-    else if (exit_true != nullptr and exit_true != this->cfg->bb_epi) {
+    else if (exit_true != nullptr and exit_true != this->cfg->bb_epi)
+    {
         o << "    jmp " << exit_true->label << "\n";
     }
 }
@@ -349,7 +331,7 @@ void CFG::gen_asm(ostream &o)
 string CFG::new_BB_name()
 {
     nextBBnumber++;
-    return nameFunction + "_BB"+ to_string(nextBBnumber);
+    return nameFunction + "_BB" + to_string(nextBBnumber);
 }
 
 // Generate assembly code for the function prologue
@@ -379,9 +361,16 @@ string CFG::create_new_tempvar()
 }
 
 // Constructor for CFG
-CFG::CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4::tree::ParseTree* tree, int nbParams)
-    : symbolIndex(symbolIndex), nextBBnumber(0), nameFunction(nameFunction), nextFreeSymbolIndex(symbolIndex.size() * -4), tree(tree), nbParams(nbParams)
+CFG::CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4::tree::ParseTree *tree, int nbParams)
+    : symbolIndex(symbolIndex), nextBBnumber(0), nameFunction(nameFunction), tree(tree), nbParams(nbParams)
+
 {
+    // int next = 0;
+    // for (auto pair : symbolIndex)
+    // {
+    //     next = min(next, pair.second.index);
+    // }
+    // nextFreeSymbolIndex = next;
     BasicBlock *bb_prologue = new BasicBlock(this, nameFunction);
     bb_prologue->add_IRInstr(new IRInstrPrologue(bb_prologue));
     add_bb(bb_prologue);
@@ -411,26 +400,35 @@ CFG::~CFG()
 
 string CFG::create_return_var()
 {
-    nextFreeSymbolIndex -= 4;
+    int next = 0;
+    for (auto pair : symbolIndex)
+    {
+        next = min(next, pair.second.index);
+    }
+    nextFreeSymbolIndex = next-4;
+    
     string returnVar = "!returnVal";
     FlagVar flag = {nextFreeSymbolIndex, false, false};
     symbolIndex.insert({returnVar, flag});
     return returnVar;
 }
 // Get the variable index from the symbol table
-string CFG::getVarName(string name, string scopeString){
-    string var = name + "!"+scopeString;
+string CFG::getVarName(string name, string scopeString)
+{
+    string var = name + "!" + scopeString;
 
     size_t pos_bang = var.find_last_of('!');
     size_t pos_ = var.find_last_of('_');
     // We are searching the right variables with the right scopes (shadowing if necessary)
     while (pos_ > pos_bang && pos_ != string::npos)
     {
-        if(this->getSymbolIndex().find(var) !=this->getSymbolIndex().end()) break;
+        if (this->getSymbolIndex().find(var) != this->getSymbolIndex().end())
+            break;
         pos_ = var.find_last_of('_');
-        if (pos_ != string::npos) {
+        if (pos_ != string::npos)
+        {
             var.erase(pos_);
-        }   
+        }
     }
 
     return var;

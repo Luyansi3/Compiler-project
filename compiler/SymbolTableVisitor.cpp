@@ -1,40 +1,40 @@
 #include "SymbolTableVisitor.h"
 
-//Declaration of the static attributes
+// Declaration of the static attributes
 unordered_map<string, FlagFonction> SymbolTableVisitor::symbolTableFonction;
-vector<CFG*> SymbolTableVisitor::cfg_liste;
+vector<CFG *> SymbolTableVisitor::cfg_liste;
 
-antlrcpp::Any SymbolTableVisitor::visitBlock(ifccParser::BlockContext *ctx) {
+antlrcpp::Any SymbolTableVisitor::visitBlock(ifccParser::BlockContext *ctx)
+{
 
     // if this the first time we enter in the block higher
-    if(scope.find(scopeString) == scope.end()){
-        scope.insert({scopeString, 0});   
+    if (scope.find(scopeString) == scope.end())
+    {
+        scope.insert({scopeString, 0});
     }
     // increase the counter of block inside the block higher
     scope[scopeString]++;
-    scopeString += "_"+to_string(scope[scopeString]);
-
+    scopeString += "_" + to_string(scope[scopeString]);
 
     this->visit(ctx->instructions());
 
-
     size_t pos = scopeString.find_last_of('_');
-    //once we are done with the block we delete his counter
+    // once we are done with the block we delete his counter
     scope.erase(scopeString);
     // then we delete the last part of the string, looks like this before : x!main_1_1
-    if (pos != string::npos) {
+    if (pos != string::npos)
+    {
         scopeString.erase(pos);
     }
     // like this after x!main_1
 
-
     return 0;
-
 }
 
-//Visit the program
-antlrcpp::Any SymbolTableVisitor::visitProg(ifccParser::ProgContext *ctx) {
-    //Inserting putchar and getchar into the fonction symbol table    
+// Visit the program
+antlrcpp::Any SymbolTableVisitor::visitProg(ifccParser::ProgContext *ctx)
+{
+    // Inserting putchar and getchar into the fonction symbol table
     FlagFonction flag;
     flag.used = false;
     flag.declared = true;
@@ -44,30 +44,27 @@ antlrcpp::Any SymbolTableVisitor::visitProg(ifccParser::ProgContext *ctx) {
     flag.nombreParams = 0;
     symbolTableFonction.insert({"getchar", flag});
 
-    //Start of the scopeString
+    // Start of the scopeString
     scopeString = "main";
     nameCurrentFunction = "main";
 
-    //Visiting the main block and creating its CFG
+    // Visiting the main block and creating its CFG
     this->visit(ctx->block());
-    CFG* cfg = new CFG(symbolTableVar, "main", ctx->block(), 0);
+    CFG *cfg = new CFG(symbolTableVar, "main", ctx->block(), 0);
     cfg_liste.push_back(cfg);
 
-
-    //Visit all the fonctions declarations
+    // Visit all the fonctions declarations
     for (auto decl_fonction : ctx->decl_fonction())
         this->visit(decl_fonction);
-
 
     return 0;
 }
 
-// Visit the declaration of the elements 
+// Visit the declaration of the elements
 antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementContext *ctx)
 {
-    if (ctx->affectation() && dynamic_cast<ifccParser::LvalueAffectationContext *>(ctx->affectation()))
+    if (ctx->affectation() && dynamic_cast<ifccParser::LvalueAffectationContext *>(ctx->affectation()) )
     {
-
         auto affect = dynamic_cast<ifccParser::LvalueAffectationContext *>(ctx->affectation());
         string varName = affect->lvalue()->VAR()->getText();
         FlagVar flagVar;
@@ -77,15 +74,17 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementCont
         flagVar.used = false;
         flagVar.functionName = nameCurrentFunction;
         flagVar.varName = varName;
-        index -= 4;
-        string var = varName + "!"+scopeString; // create the right format for the variable to store it in the table
-                                                // like this each variable+scope is unique
+        this->index -= 4; /// ***** bizarre dans le cas quand on check a[i] (a[i] a déjà sa memoire et on va rajouter -4 ?)
+        string var = varName + "!" + scopeString; // create the right format for the variable to store it in the table
+                                                  // like this each variable+scope is unique
 
-        if(symbolTableVar.find(var) == symbolTableVar.end()){
+        if (symbolTableVar.find(var) == symbolTableVar.end())
+        {
             symbolTableVar.insert({var, flagVar});
         }
-        else{        
-            cerr<< "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
+        else
+        {
+            cerr << "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
             exit(1);
         }
     }
@@ -96,35 +95,64 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementCont
         int tableSize = 0;
         if (affect->constante())
         {
-             tableSize = stoi(affect->constante()->getText());
+            tableSize = stoi(affect->constante()->getText());
         }
         else
         {
-             tableSize = affect->array_litteral()->expr().size();
+            tableSize = affect->array_litteral()->expr().size();
         }
-        // Iterate in reverse so that element 0 is allocated last, receiving the smallest index.
 
         FlagVar flagVar;
 
-        index -= (tableSize - 1) * 4; 
+        this->index -= (tableSize-1) * 4;
+        flagVar.index = index;
+        flagVar.affected = false;
+        flagVar.used = false;
+        flagVar.functionName = nameCurrentFunction;
+        flagVar.varName = varName;
+        index-=4;
+        string var = varName + "!" + scopeString; // create the right format for the variable to store it in the table
+                                                  // like this each variable+scope is unique
+
+        if (symbolTableVar.find(var) == symbolTableVar.end())
+        {
+            symbolTableVar.insert({var, flagVar});
+        }
+        else
+        {
+            cerr << "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
+            exit(1);
+        }
+
+        this->visit(ctx->affectation());
+    }
+    else if(ctx->VAR() && ctx->constante())
+    {
+        int val=0;
+        
+        val=stoi(ctx->constante()->getText());
+        this->index-=(val-1)*4;
+        string varName = ctx->VAR()->getText();
+        FlagVar flagVar;
+
         flagVar.index = index;
         flagVar.affected = false;
         flagVar.used = false;
         flagVar.functionName = nameCurrentFunction;
         flagVar.varName = varName;
         index -= 4;
-        string var = varName + "!"+scopeString; // create the right format for the variable to store it in the table
-                                                // like this each variable+scope is unique
+        string var = varName + "!" + scopeString; // create the right format for the variable to store it in the table
+                                                  // like this each variable+scope is unique
 
-        if(symbolTableVar.find(var) == symbolTableVar.end()){
+        if (symbolTableVar.find(var) == symbolTableVar.end())
+        {
             symbolTableVar.insert({var, flagVar});
         }
-        else{        
-            cerr<< "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
+        else
+        {
+            cerr << "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
             exit(1);
         }
-
-        this->visit(ctx->affectation());
     }
     else
     {
@@ -137,51 +165,53 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_element(ifccParser::Decl_elementCont
         flagVar.functionName = nameCurrentFunction;
         flagVar.varName = varName;
         index -= 4;
-        string var = varName + "!"+scopeString; // create the right format for the variable to store it in the table
-                                                // like this each variable+scope is unique
+        string var = varName + "!" + scopeString; // create the right format for the variable to store it in the table
+                                                  // like this each variable+scope is unique
 
-        if(symbolTableVar.find(var) == symbolTableVar.end()){
+        if (symbolTableVar.find(var) == symbolTableVar.end())
+        {
             symbolTableVar.insert({var, flagVar});
         }
-        else{        
-            cerr<< "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
+        else
+        {
+            cerr << "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
             exit(1);
         }
     }
-
     return 0;
 }
 
 antlrcpp::Any SymbolTableVisitor::visitLvalueAffectation(ifccParser::LvalueAffectationContext *ctx)
 {
     string varName = ctx->lvalue()->VAR()->getText();
-    string var = varName + "!"+scopeString;
+    string var = varName + "!" + scopeString;
     bool find = false;
 
     size_t pos_bang = var.find_last_of('!');
     size_t pos_ = var.find_last_of('_');
-    
+
     while (pos_ > pos_bang && pos_ != string::npos)
     {
-        if(symbolTableVar.find(var) !=symbolTableVar.end()){
+        if (symbolTableVar.find(var) != symbolTableVar.end())
+        {
             find = true;
             symbolTableVar[var].affected = true;
             break;
         }
 
-        // we are doing shadowing here, if we do not find the var at the current depth 
+        // we are doing shadowing here, if we do not find the var at the current depth
         // we go up to find if the variable is defined higher
         pos_ = var.find_last_of('_');
-    
-        if (pos_ != string::npos) {
+
+        if (pos_ != string::npos)
+        {
             var.erase(pos_);
         }
-        
-        
     }
     // if it is not define higher until the main block we throw an error
-    if(!find){
-        cerr << "Variable " << varName  << " dans " << nameCurrentFunction <<  " non déclarée" << endl;
+    if (!find)
+    {
+        cerr << "Variable " << varName << " dans " << nameCurrentFunction << " non déclarée" << endl;
         exit(1);
     }
     this->visit(ctx->lvalue());
@@ -191,7 +221,7 @@ antlrcpp::Any SymbolTableVisitor::visitLvalueAffectation(ifccParser::LvalueAffec
 
 antlrcpp::Any SymbolTableVisitor::visitTableAffectation(ifccParser::TableAffectationContext *ctx)
 {
-    string varName = ctx->VAR()->getText();
+    string varName = ctx->VAR()->getText() + "!" + scopeString;
     if (symbolTableVar.find(varName) == symbolTableVar.end())
     {
         cerr << "Variable " << ctx->VAR()->getText() << " non déclarée" << endl;
@@ -214,7 +244,7 @@ antlrcpp::Any SymbolTableVisitor::visitTableAffectation(ifccParser::TableAffecta
         else
         {
             for (int i = 0; i < exprListSize; i++)
-            symbolTableVar[ctx->VAR()->getText()].affected = true;
+                symbolTableVar[ctx->VAR()->getText()].affected = true;
         }
     }
     this->visit(ctx->array_litteral());
@@ -234,93 +264,105 @@ antlrcpp::Any SymbolTableVisitor::visitExprVar(ifccParser::ExprVarContext *ctx)
 {
 
     string varName = ctx->VAR()->getText();
-    bool find = false;  
-    string var = varName + "!"+scopeString;
+    bool find = false;
+    string var = varName + "!" + scopeString;
 
     size_t pos_bang = var.find_last_of('!');
     size_t pos_ = var.find_last_of('_');
     while (pos_ > pos_bang && pos_ != string::npos)
     {
-        if(symbolTableVar.find(var) !=symbolTableVar.end()){
+        if (symbolTableVar.find(var) != symbolTableVar.end())
+        {
             find = true;
             symbolTableVar[var].used = true;
 
             break;
         }
         pos_ = var.find_last_of('_');
-    
-        if (pos_ != string::npos) {
+
+        if (pos_ != string::npos)
+        {
             var.erase(pos_);
         }
-        
-        
     }
 
-    if(!find){
+    if (!find)
+    {
         cerr << "Variable " << varName << " dans " << nameCurrentFunction << " non déclarée" << endl;
         exit(1);
     }
 
-
     return 0;
 }
 
-
-
 // Visit the call of a function
-antlrcpp::Any SymbolTableVisitor::visitCall(ifccParser::CallContext* ctx) {
+antlrcpp::Any SymbolTableVisitor::visitCall(ifccParser::CallContext *ctx)
+{
     string label = ctx->VAR()->getText();
     int nbParams = ctx->liste_param()->expr().size();
 
-    if (symbolTableFonction.find(label) == symbolTableFonction.end()) {
+    if (symbolTableFonction.find(label) == symbolTableFonction.end())
+    {
         FlagFonction flag;
         flag.declared = false;
         flag.used = true;
         flag.nombreParams = nbParams;
         symbolTableFonction.insert({label, flag});
         cerr << "La fonction " << label << " est appelée avant d'être déclarée" << endl;
-    } else if (symbolTableFonction[label].nombreParams == nbParams) {
+    }
+    else if (symbolTableFonction[label].nombreParams == nbParams)
+    {
         symbolTableFonction[label].used = true;
-    } else {
+    }
+    else
+    {
         cerr << "La fonction " << label << " est appelée avec le mauvais nb de params" << endl;
         exit(1);
     }
 
-    for (auto expression : ctx->liste_param()->expr()) {
+    for (auto expression : ctx->liste_param()->expr())
+    {
         this->visit(expression);
     }
 
     return 0;
 }
 
-
-// Visit the declaration of a function 
-antlrcpp::Any SymbolTableVisitor::visitDecl_fonction(ifccParser::Decl_fonctionContext *ctx) {
+// Visit the declaration of a function
+antlrcpp::Any SymbolTableVisitor::visitDecl_fonction(ifccParser::Decl_fonctionContext *ctx)
+{
     int nbParams = ctx->decl_params()->decl_param().size();
     string label = ctx->VAR()->getText();
 
-
-    if (symbolTableFonction.find(label) != symbolTableFonction.end()) {
-        if (symbolTableFonction[label].declared) {
+    if (symbolTableFonction.find(label) != symbolTableFonction.end())
+    {
+        if (symbolTableFonction[label].declared)
+        {
             cerr << "La fonction " << label << " a déjà été déclarée" << endl;
-            exit(1); 
-        } else if (symbolTableFonction[label].nombreParams == nbParams) {
+            exit(1);
+        }
+        else if (symbolTableFonction[label].nombreParams == nbParams)
+        {
             symbolTableFonction[label].declared = true;
-        } else {
+        }
+        else
+        {
             cerr << "La fonction " << label << " est appelée avec le mauvais nb d'arguments" << endl;
             exit(1);
         }
-    } else {
+    }
+    else
+    {
         FlagFonction flag;
         flag.used = false;
         flag.declared = true;
         flag.nombreParams = nbParams;
         symbolTableFonction.insert({label, flag});
     }
-    
-    //Reinitialize the var symbol table and so the index
+
+    // Reinitialize the var symbol table and so the index
     unordered_map<string, FlagVar> newSymbolTable;
-    index = -4;
+    this->index = -4;
     symbolTableVar = newSymbolTable;
     scopeString = label;
 
@@ -329,15 +371,15 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_fonction(ifccParser::Decl_fonctionCo
     // Visting the params and block associated with the fonc and then creating its own CFG
     this->visit(ctx->decl_params());
     this->visit(ctx->block());
-    CFG* cfg = new CFG(symbolTableVar, label, ctx->block(), nbParams);
+    CFG *cfg = new CFG(symbolTableVar, label, ctx->block(), nbParams);
     cfg_liste.push_back(cfg);
 
-    return 0;    
+    return 0;
 }
 
-
 // Visit the declaration of the params of a function
-antlrcpp::Any SymbolTableVisitor::visitDecl_param(ifccParser::Decl_paramContext *ctx) {
+antlrcpp::Any SymbolTableVisitor::visitDecl_param(ifccParser::Decl_paramContext *ctx)
+{
     string varName = ctx->VAR()->getText();
 
     FlagVar flagVar;
@@ -348,20 +390,19 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_param(ifccParser::Decl_paramContext 
     flagVar.functionName = nameCurrentFunction;
     flagVar.varName = varName;
     index -= 4;
-    //we add _1 because params are not inside the block but have the scope so we add it manually
-    string var = varName + "!"+scopeString+"_1"; 
+    // we add _1 because params are not inside the block but have the scope so we add it manually
+    string var = varName + "!" + scopeString + "_1";
 
-    if(symbolTableVar.find(var) == symbolTableVar.end()){
+    if (symbolTableVar.find(var) == symbolTableVar.end())
+    {
 
         symbolTableVar.insert({var, flagVar});
     }
-    else{        
-        cerr<< "Variable " << varName << " dans " << nameCurrentFunction <<  " deja déclaré" << endl;
+    else
+    {
+        cerr << "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
         exit(1);
     }
 
-
-
     return 0;
 }
-

@@ -163,6 +163,8 @@ antlrcpp::Any Linearize::visitLvalue(ifccParser::LvalueContext *ctx)
         this->visit(ctx->expr());
         string baseVarName = cfg->getVarName(ctx->VAR()->getText(), scopeString);
         string tmpIndex = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpIndex, "!reg"));
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", tmpValue));
         cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, tmpValue, tmpIndex, baseVarName));
     }
     return 0;
@@ -618,11 +620,13 @@ antlrcpp::Any Linearize::visitExprPrefixe(ifccParser::ExprPrefixeContext *ctx) {
 }
 antlrcpp::Any Linearize::visitExprTable(ifccParser::ExprTableContext *ctx)
 {
-    string tmpValue = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpValue, "!reg"));
+    // string tmpValue = cfg->create_new_tempvar();
+    // cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpValue, "!reg"));
     this->visit(ctx->expr());
-    string baseVarName = ctx->VAR()->getText();
+    string baseVarName =cfg->getVarName( ctx->VAR()->getText(),scopeString);
     string tmpIndex = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, tmpValue, tmpIndex, baseVarName));
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpIndex, "!reg"));
+
+    cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, "!reg", tmpIndex, baseVarName));
     return 0;
 }

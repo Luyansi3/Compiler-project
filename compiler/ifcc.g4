@@ -26,7 +26,7 @@ decl_param : type VAR ;
 
 declaration: type decl_element (COMMA decl_element)* ;
 
-decl_element: VAR (OPENBRACKET expr CLOSEBRACKET)*
+decl_element: VAR (OPENBRACKET constante CLOSEBRACKET)?
             | affectation ;
 
 if_stmt: IF OPENPAR expr CLOSEPAR (instruction | block) (elif_stmt)* (else_stmt)? ;
