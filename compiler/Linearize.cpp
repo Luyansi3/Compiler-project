@@ -65,7 +65,7 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
         // If this is a constant that does not come from ConstContext we put it in reg
         // otherwise the constant is already inside reg
 
-        if (e.is<int>() && !dynamic_cast<ifccParser::ExprConstContext*>(ctx->expr())) {
+        if (e.is<int>()) {
             
             int result = e.as<int>();
             cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg",result));
@@ -90,7 +90,7 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
 
         // Visit the expression and the left-hand side of the assignment
         auto e = this->visit(ctx->expr());
-        if (e.is<int>() && !dynamic_cast<ifccParser::ExprConstContext*>(ctx->expr())) {
+        if (e.is<int>()) {
             int result = e.as<int>();
             cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg",result));
         }
@@ -140,6 +140,8 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
     
     return nullptr;
 }
+
+
 antlrcpp::Any Linearize::visitTableAffectation(ifccParser::TableAffectationContext *ctx)
 {
     int i = 0;
@@ -147,9 +149,16 @@ antlrcpp::Any Linearize::visitTableAffectation(ifccParser::TableAffectationConte
 
     for (auto &expr : ctx->array_litteral()->expr())
     {
-        this->visit(expr);
+        auto e = this->visit(expr);
         string tmpValue = cfg->create_new_tempvar();
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpValue, "!reg")); // stocker valeur dans tmpValue
+        if (e.is<int>()) {
+            int result = e.as<int>();
+            cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmpValue, result));
+        }
+        else{
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpValue, "!reg")); // stocker valeur dans tmpValue
+        }
+        
 
         cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", i)); // charger i dans !reg
 
@@ -170,7 +179,7 @@ antlrcpp::Any Linearize::visitTableAffectation(ifccParser::TableAffectationConte
         i++;
     }
 
-    return nullptr;
+    return 0;
 }
 
 // Visit a variable expression
@@ -237,11 +246,8 @@ antlrcpp::Any Linearize::visitExprConst(ifccParser::ExprConstContext *ctx)
 
     auto parent = ctx->parent; // If we come from add sub mul or div context we dont need to load the value
                                 // in reg, because we will compute directly whithout using reg
-    if(!dynamic_cast<ifccParser::ExprAddSubContext *>(parent) && !dynamic_cast<ifccParser::ExprMulDivModContext *>(parent) && !dynamic_cast<ifccParser::ExprUnaryContext *>(parent)){
-        // Add a load constant instruction
-        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", retval));
-    }
-    
+
+
     return (int) retval;
 }
 
@@ -261,12 +267,21 @@ antlrcpp::Any Linearize::visitLvalue(ifccParser::LvalueContext *ctx)
     {
         string tmpValue = cfg->create_new_tempvar();
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpValue, "!reg"));
-        this->visit(ctx->expr());
-        string baseVarName = cfg->getVarName(ctx->VAR()->getText(), scopeString);
+
+        auto e = this->visit(ctx->expr());
         string tmpIndex = cfg->create_new_tempvar();
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpIndex, "!reg"));
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", tmpValue));
-        cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, tmpValue, tmpIndex, baseVarName));
+        if (e.is<int>()) {
+            int result = e.as<int>();
+            cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", result));
+        }
+        // else{
+        //     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpIndex, "!reg")); // stocker valeur dans tmpIndex
+        // }
+
+        string baseVarName = cfg->getVarName(ctx->VAR()->getText(), scopeString);
+        
+        // cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", tmpValue));
+        cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, tmpValue, "!reg", baseVarName));
     }
     return 0;
 }
@@ -697,6 +712,7 @@ antlrcpp::Any Linearize::visitElse_stmt(ifccParser::Else_stmtContext *ctx)
 
 antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
     // Visit the condition expression
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     auto e1 = this->visit(ctx->expr(0));
     cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     if (e1.is<int>()) {
@@ -722,6 +738,7 @@ antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
     cfg->current_bb = bb_and;
 
     // Visit the condition expression
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     auto e2 = this->visit(ctx->expr(1));
     cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     if (e2.is<int>()) {
@@ -746,6 +763,7 @@ antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
 
 antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
     // Visit the condition expression
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     auto e1 = this->visit(ctx->expr(0));
     cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     if (e1.is<int>()) {
@@ -755,7 +773,6 @@ antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
     else{
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     }
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     BasicBlock *bb_or = new BasicBlock(cfg, cfg->current_bb->label + "_or");
     cfg->add_bb(bb_or);
     BasicBlock *bb_true = new BasicBlock(cfg, cfg->current_bb->label + "_true");
@@ -771,6 +788,7 @@ antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
     cfg->current_bb = bb_or;
 
     // Visit the condition expression
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     auto e2 = this->visit(ctx->expr(1));
     cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     if (e2.is<int>()) {
