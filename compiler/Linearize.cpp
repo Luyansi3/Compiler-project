@@ -329,12 +329,12 @@ antlrcpp::Any Linearize::visitExprMulDivMod(ifccParser::ExprMulDivModContext *ct
             if (resultRight == 0)
             {
                 cerr << "Division par 0" << endl; 
-                // tmp1 = cfg->create_new_tempvar();
-                // cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp1, resultRight));
-                // cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", resultLeft));
-                // cfg->current_bb->add_IRInstr(new IRInstrDiv(cfg->current_bb, tmp1));
-                // return nullptr;
-                exit(1);
+                tmp1 = cfg->create_new_tempvar();
+                cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp1, resultRight));
+                cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", resultLeft));
+                cfg->current_bb->add_IRInstr(new IRInstrDiv(cfg->current_bb, tmp1));
+                return nullptr;
+                // exit(1);
             } 
             return (int) (resultLeft / resultRight);
         }
@@ -546,12 +546,15 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx)
 {
     BasicBlock *bb_init = cfg->current_bb;
     // Visit the condition expression
-
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
+    bool resultConst = false;
+    int result;
     auto e1 = this->visit(ctx->expr());
     cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     if (e1.is<int>()) {
-        int result = e1.as<int>();
+        result = e1.as<int>();
         cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, cfg->current_bb->test_var_name, result));
+        resultConst = true;
     }
     else{
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
@@ -571,13 +574,31 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx)
 
     // Set the current basic block to the then part
     cfg->current_bb = bb_then;
-    // Visit the then part
-    if (ctx->instruction()) {
-        this->visit(ctx->instruction());
+    if(resultConst)
+    {
+        if (result)
+        {
+            // Visit the then part
+            if (ctx->instruction()) {
+                this->visit(ctx->instruction());
+            }
+            else {
+                this->visit(ctx->block());
+            }
+            return nullptr; // we dont need to execute the rest because the first if is always true
+        }   
     }
-    else {
-        this->visit(ctx->block());
+    else{
+        // Visit the then part
+        if (ctx->instruction()) {
+            this->visit(ctx->instruction());
+        }
+        else {
+            this->visit(ctx->block());
+        }
     }
+    
+    
 
     // Set the current basic block to the init bb
     cfg->current_bb = bb_init;
@@ -618,6 +639,7 @@ antlrcpp::Any Linearize::visitElif_stmt(ifccParser::Elif_stmtContext *ctx)
     if (e1.is<int>()) {
         int result = e1.as<int>();
         cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, cfg->current_bb->test_var_name, result));
+        if (!result) return nullptr;
     }
     else{
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
@@ -794,6 +816,11 @@ antlrcpp::Any Linearize::visitWhile_stmt(ifccParser::While_stmtContext *ctx)
     if (e1.is<int>()) {
         int result = e1.as<int>();
         cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, cfg->current_bb->test_var_name, result));
+        if (result) cerr << "Risque de boucle infinie" << endl;
+        else{
+            return nullptr;
+        }
+        
     }
     else{
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
