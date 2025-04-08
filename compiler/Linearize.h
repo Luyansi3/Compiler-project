@@ -26,7 +26,7 @@ public:
     virtual antlrcpp::Any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
     // virtual antlrcpp::Any visitAffectation(ifccParser::AffectationContext *ctx) override;
 
-    virtual antlrcpp ::Any visitLvalueAffectation(ifccParser::LvalueAffectationContext *ctx) override;
+    virtual antlrcpp ::Any visitAffectation(ifccParser::AffectationContext *ctx) override;
     virtual antlrcpp::Any visitTableAffectation(ifccParser::TableAffectationContext *ctx) override;
     virtual antlrcpp::Any visitExprVar(ifccParser::ExprVarContext *ctx) override;
     virtual antlrcpp::Any visitExprConst(ifccParser::ExprConstContext *ctx) override;
@@ -46,4 +46,5 @@ public:
     virtual antlrcpp::Any visitExprPrefixe(ifccParser::ExprPrefixeContext *ctx) override;
     virtual antlrcpp::Any visitCall(ifccParser::CallContext *ctx) override;
     virtual antlrcpp::Any visitExprTable(ifccParser::ExprTableContext *ctx)override;
+    virtual antlrcpp::Any visitVarAffectation(ifccParser::VarAffectationContext *ctx)override;
 };

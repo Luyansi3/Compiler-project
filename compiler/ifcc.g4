@@ -26,8 +26,9 @@ decl_param : type VAR ;
 
 declaration: type decl_element (COMMA decl_element)* ;
 
-decl_element: VAR (OPENBRACKET constante CLOSEBRACKET)?
-            | affectation ;
+decl_element: VAR (OPENBRACKET constante CLOSEBRACKET)?                         # TableDeclaration
+            | VAR OPENBRACKET (constante)? CLOSEBRACKET EQUAL array_litteral    # TableAffectation
+            | VAR EQUAL expr                                                    # VarAffectation ;
 
 if_stmt: IF OPENPAR expr CLOSEPAR (instruction | block) (elif_stmt)* (else_stmt)? ;
 
@@ -37,13 +38,12 @@ else_stmt: ELSE (instruction | block) ;
 
 while_stmt: WHILE OPENPAR expr CLOSEPAR (instruction | block) ;
 
-affectation: lvalue EQUAL expr                                             #LvalueAffectation
-           | VAR OPENBRACKET (constante|) CLOSEBRACKET EQUAL  array_litteral   #TableAffectation;
+affectation: lvalue EQUAL expr;
 
-array_litteral : OPENCROCHET (expr (COMMA expr)* | ) CLOSECROCHET;
+array_litteral : OPENCROCHET (expr (COMMA expr)*)? CLOSECROCHET;
 return_stmt: RETURN expr ;
 
-lvalue: VAR ((OPENBRACKET expr CLOSEBRACKET )| ) ;
+lvalue: VAR (OPENBRACKET expr CLOSEBRACKET)? ;
 
 expr: OPENPAR expr CLOSEPAR #ExprPar
     | lvalue opD            #ExprSuffixe

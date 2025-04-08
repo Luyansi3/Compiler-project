@@ -48,7 +48,7 @@ antlrcpp::Any Linearize::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 }
 
 // Visit an assignment
-antlrcpp::Any Linearize::visitLvalueAffectation(ifccParser::LvalueAffectationContext *ctx)
+antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
 {
     // // Visit the expression and the left-hand side of the assignment
     this->visit(ctx->expr());
@@ -628,5 +628,12 @@ antlrcpp::Any Linearize::visitExprTable(ifccParser::ExprTableContext *ctx)
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpIndex, "!reg"));
 
     cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, "!reg", tmpIndex, baseVarName));
+    return 0;
+}
+
+antlrcpp::Any Linearize::visitVarAffectation(ifccParser::VarAffectationContext *ctx) {
+    string varName = cfg->getVarName(ctx->VAR()->getText(), scopeString);
+    this->visit(ctx->expr());
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
     return 0;
 }
