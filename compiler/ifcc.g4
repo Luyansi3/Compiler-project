@@ -43,12 +43,14 @@ return_stmt: RETURN expr ;
 
 lvalue: VAR ;
 
+
 expr: OPENPAR expr CLOSEPAR #ExprPar
     | lvalue opD            #ExprSuffixe
     | opD lvalue            #ExprPrefixe
     | opU expr              #ExprUnary
     | expr opM expr         #MulDiv
     | expr opA expr         #AddSub
+    | expr MOD expr     #Modulo
     | expr compRelationnal expr    #ExprCompRelationnal
     | expr compEqual expr    #ExprCompEqual
     | expr AND expr         #ExprAnd
@@ -57,6 +59,7 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | call                  #ExprCall   
     | VAR                   #ExprVar
     | constante             #ExprConst ;
+
 
 opD: PLUSPLUS | MOINSMOINS;
 
@@ -107,6 +110,7 @@ SEMI          : ';';
 EQUAL         : '=';
 PLUS          : '+';
 MINUS         : '-';
+MOD           : '%';
 NOT           : '!';
 MULT          : '*';
 DIV           : '/';
