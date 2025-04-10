@@ -50,8 +50,8 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | lvalue opD            #ExprSuffixe
     | opD lvalue            #ExprPrefixe
     | opU expr              #ExprUnary
-    | expr opM expr         #MulDiv
-    | expr opA expr         #AddSub
+    | expr opM expr         #ExprMulDivMod
+    | expr opA expr         #ExprAddSub
     | expr opS expr         #ExprShift
     | expr compRelationnal expr    #ExprCompRelationnal
     | expr compEqual expr    #ExprCompEqual

@@ -252,7 +252,7 @@ void IRInstrSHL::gen_asm(ostream &o) {
     string s = bb->cfg->IR_reg_to_asm(src);
     string c = bb->cfg->IR_reg_to_asm(count);
     o << "    movl " << c << ", " << "%edx" << "\n";
-    o << "    movl %eax, %ecx" << "\n";
+    o << "    movl " <<  s << ", %ecx" << "\n";
     o << "    sall %cl, %edx" << "\n";
     o << "    movl %edx, %eax" << "\n";
 }
@@ -261,7 +261,7 @@ void IRInstrSHR::gen_asm(ostream &o) {
     string s = bb->cfg->IR_reg_to_asm(src);
     string c = bb->cfg->IR_reg_to_asm(count);
     o << "    movl " << c << ", " << "%edx" << "\n";
-    o << "    movl %eax, %ecx" << "\n";
+    o << "    movl " <<  s << ", %ecx" << "\n";
     o << "    sarl %cl, %edx" << "\n";
     o << "    movl %edx, %eax" << "\n";
 }

@@ -158,7 +158,7 @@ antlrcpp::Any Linearize::visitLvalue(ifccParser::LvalueContext *ctx)
 }
 
 // Visit a multiplication or division expression
-antlrcpp::Any Linearize::visitMulDiv(ifccParser::MulDivContext *ctx)
+antlrcpp::Any Linearize::visitExprMulDivMod(ifccParser::ExprMulDivModContext *ctx)
 {
     auto expr1 = ctx->expr(0);
     auto expr2 = ctx->expr(1);
@@ -203,7 +203,7 @@ antlrcpp::Any Linearize::visitMulDiv(ifccParser::MulDivContext *ctx)
 }
 
 // Visit an addition or subtraction expression
-antlrcpp::Any Linearize::visitAddSub(ifccParser::AddSubContext *ctx)
+antlrcpp::Any Linearize::visitExprAddSub(ifccParser::ExprAddSubContext *ctx)
 {
     if (ctx->opA()->PLUS())
     {
