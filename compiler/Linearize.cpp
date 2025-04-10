@@ -175,8 +175,20 @@ antlrcpp::Any Linearize::visitMulDiv(ifccParser::MulDivContext *ctx)
         // Add a multiplication instruction
         cfg->current_bb->add_IRInstr(new IRInstrMul(cfg->current_bb, tmp, "!reg"));
     }
-    else
-    {
+    else if (ctx->opM()->MOD()) {
+        auto expr1 = ctx->expr(0);
+        auto expr2 = ctx->expr(1);
+
+        this->visit(expr2);
+        string tmp1 = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+
+        this->visit(expr1);
+
+        
+        cfg->current_bb->add_IRInstr(new IRInstrMod(cfg->current_bb, tmp1));
+    }
+    else{
         // Visit the second expression
         this->visit(expr2);
         string tmp = cfg->create_new_tempvar();

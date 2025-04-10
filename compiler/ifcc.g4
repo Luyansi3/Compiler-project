@@ -52,7 +52,6 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | opU expr              #ExprUnary
     | expr opM expr         #MulDiv
     | expr opA expr         #AddSub
-    | expr MOD expr     #Modulo
     | expr compRelationnal expr    #ExprCompRelationnal
     | expr compEqual expr    #ExprCompEqual
     | expr AND expr         #ExprAnd
@@ -80,7 +79,7 @@ compEqual: EQ | NEQ ;
 opU: MINUS | NOT | PLUS;
 
 opA: PLUS | MINUS ;
-opM: DIV | MULT ;
+opM: DIV | MULT | MOD;
 
 type: INT ;
 
