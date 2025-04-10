@@ -45,14 +45,19 @@ return_stmt: RETURN expr ;
 
 lvalue: VAR (OPENBRACKET expr CLOSEBRACKET)? ;
 
+
 expr: OPENPAR expr CLOSEPAR #ExprPar
     | lvalue opD            #ExprSuffixe
     | opD lvalue            #ExprPrefixe
     | opU expr              #ExprUnary
-    | expr opM expr         #MulDiv
-    | expr opA expr         #AddSub
+    | expr opM expr         #ExprMulDivMod
+    | expr opA expr         #ExprAddSub
+    | expr opS expr         #ExprShift
     | expr compRelationnal expr    #ExprCompRelationnal
     | expr compEqual expr    #ExprCompEqual
+    | expr ANDBIT expr      #ExprAndBit
+    | expr XORBIT expr      #ExprXorBit
+    | expr ORBIT expr       #ExprOrBit
     | expr AND expr         #ExprAnd
     | expr OR expr           #ExprOr
     | affectation           #ExprAffectation 
@@ -60,6 +65,7 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | VAR                   #ExprVar
     | constante             #ExprConst 
     | VAR OPENBRACKET expr CLOSEBRACKET #ExprTable;
+
 
 opD: PLUSPLUS | MOINSMOINS;
 
@@ -77,7 +83,8 @@ compEqual: EQ | NEQ ;
 opU: MINUS | NOT | PLUS;
 
 opA: PLUS | MINUS ;
-opM: DIV | MULT ;
+opM: DIV | MULT | MOD;
+opS: SHL | SHR;
 
 type: INT ;
 
@@ -114,6 +121,12 @@ SEMI          : ';';
 EQUAL         : '=';
 PLUS          : '+';
 MINUS         : '-';
+MOD           : '%';
+SHL           : '<<';
+SHR           : '>>';
+ANDBIT        : '&';
+ORBIT         : '|';
+XORBIT        : '^';
 NOT           : '!';
 MULT          : '*';
 DIV           : '/';

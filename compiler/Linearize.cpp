@@ -158,7 +158,7 @@ antlrcpp::Any Linearize::visitLvalue(ifccParser::LvalueContext *ctx)
 }
 
 // Visit a multiplication or division expression
-antlrcpp::Any Linearize::visitMulDiv(ifccParser::MulDivContext *ctx)
+antlrcpp::Any Linearize::visitExprMulDivMod(ifccParser::ExprMulDivModContext *ctx)
 {
     auto expr1 = ctx->expr(0);
     auto expr2 = ctx->expr(1);
@@ -175,8 +175,20 @@ antlrcpp::Any Linearize::visitMulDiv(ifccParser::MulDivContext *ctx)
         // Add a multiplication instruction
         cfg->current_bb->add_IRInstr(new IRInstrMul(cfg->current_bb, tmp, "!reg"));
     }
-    else
-    {
+    else if (ctx->opM()->MOD()) {
+        auto expr1 = ctx->expr(0);
+        auto expr2 = ctx->expr(1);
+
+        this->visit(expr2);
+        string tmp1 = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
+
+        this->visit(expr1);
+
+        
+        cfg->current_bb->add_IRInstr(new IRInstrMod(cfg->current_bb, tmp1));
+    }
+    else{
         // Visit the second expression
         this->visit(expr2);
         string tmp = cfg->create_new_tempvar();
@@ -191,7 +203,7 @@ antlrcpp::Any Linearize::visitMulDiv(ifccParser::MulDivContext *ctx)
 }
 
 // Visit an addition or subtraction expression
-antlrcpp::Any Linearize::visitAddSub(ifccParser::AddSubContext *ctx)
+antlrcpp::Any Linearize::visitExprAddSub(ifccParser::ExprAddSubContext *ctx)
 {
     if (ctx->opA()->PLUS())
     {
@@ -224,9 +236,12 @@ antlrcpp::Any Linearize::visitAddSub(ifccParser::AddSubContext *ctx)
     return 0;
 }
 
-antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx)
-{
-    // Obtentino du label de la fonction
+
+
+
+
+antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
+    //Obtentino du label de la fonction
     string label = ctx->VAR()->getText();
     vector<string> params;
 
@@ -302,8 +317,8 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx)
 {
     BasicBlock *bb_init = cfg->current_bb;
     // Visit the condition expression
-    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     this->visit(ctx->expr());
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     // Create a new basic block for the then part
     BasicBlock *bb_then = new BasicBlock(cfg, cfg->current_bb->label + "_then");
@@ -338,7 +353,6 @@ antlrcpp::Any Linearize::visitIf_stmt(ifccParser::If_stmtContext *ctx)
         // Create a new basic block for the elif part
         BasicBlock *bb_elif = new BasicBlock(cfg, cfg->current_bb->label + "_elif");
         cfg->add_bb(bb_elif);
-        bb_elif->test_var_name = cfg->create_new_tempvar();
         bb_elif->exit_true = bb_endif;
         cfg->current_bb->exit_false = bb_elif;
         // Set the current basic block to the endif
@@ -363,6 +377,7 @@ antlrcpp::Any Linearize::visitElif_stmt(ifccParser::Elif_stmtContext *ctx)
 {
     // Visit the condition expression
     this->visit(ctx->expr());
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     // Create a new basic block for the then part
     BasicBlock *bb_then = new BasicBlock(cfg, cfg->current_bb->label + "_then");
@@ -415,10 +430,10 @@ antlrcpp::Any Linearize::visitElse_stmt(ifccParser::Else_stmtContext *ctx)
     return 0;
 }
 
-antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx)
-{
+antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
     // Visit the condition expression
     this->visit(ctx->expr(0));
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     BasicBlock *bb_and = new BasicBlock(cfg, cfg->current_bb->label + "_and");
     cfg->add_bb(bb_and);
@@ -436,6 +451,7 @@ antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx)
 
     // Visit the condition expression
     this->visit(ctx->expr(1));
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     bb_end->exit_true = cfg->current_bb->exit_true;
     bb_end->exit_false = cfg->current_bb->exit_false;
@@ -449,10 +465,10 @@ antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx)
     return 0;
 }
 
-antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx)
-{
+antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
     // Visit the condition expression
     this->visit(ctx->expr(0));
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     BasicBlock *bb_or = new BasicBlock(cfg, cfg->current_bb->label + "_or");
     cfg->add_bb(bb_or);
@@ -470,6 +486,7 @@ antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx)
 
     // Visit the condition expression
     this->visit(ctx->expr(1));
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     bb_end->exit_true = cfg->current_bb->exit_true;
     bb_end->exit_false = cfg->current_bb->exit_false;
@@ -500,10 +517,10 @@ antlrcpp::Any Linearize::visitWhile_stmt(ifccParser::While_stmtContext *ctx)
     bb_body->exit_true = bb_test;
 
     cfg->current_bb = bb_test;
-    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
 
     // Visit the condition expression
     this->visit(ctx->expr());
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
 
     cfg->current_bb = bb_body;
@@ -621,4 +638,46 @@ antlrcpp::Any Linearize::visitVarAffectation(ifccParser::VarAffectationContext *
     this->visit(ctx->expr());
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
     return 0;
+}
+antlrcpp::Any Linearize::visitExprShift(ifccParser::ExprShiftContext *ctx) {
+    this->visit(ctx->expr(0));
+    string tmp = cfg->create_new_tempvar();
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+    this->visit(ctx->expr(1));
+
+    if (ctx->opS()->SHL()) {
+        cfg->current_bb->add_IRInstr(new IRInstrSHL(cfg->current_bb, "!reg", tmp));
+    }
+    else if (ctx->opS()->SHR()) {
+        cfg->current_bb->add_IRInstr(new IRInstrSHR(cfg->current_bb, "!reg", tmp));
+    }
+
+    return nullptr;
+}
+
+antlrcpp::Any Linearize::visitExprAndBit(ifccParser::ExprAndBitContext *ctx) {
+    this->visit(ctx->expr(0));
+    string tmp = cfg->create_new_tempvar();
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+    this->visit(ctx->expr(1));
+    cfg->current_bb->add_IRInstr(new IRInstrAndBit(cfg->current_bb, tmp, "!reg"));
+    return nullptr;
+}
+
+antlrcpp::Any Linearize::visitExprOrBit(ifccParser::ExprOrBitContext *ctx) {
+    this->visit(ctx->expr(0));
+    string tmp = cfg->create_new_tempvar();
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+    this->visit(ctx->expr(1));
+    cfg->current_bb->add_IRInstr(new IRInstrOrBit(cfg->current_bb, tmp, "!reg"));
+    return nullptr;
+}
+
+antlrcpp::Any Linearize::visitExprXorBit(ifccParser::ExprXorBitContext *ctx) {
+    this->visit(ctx->expr(0));
+    string tmp = cfg->create_new_tempvar();
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+    this->visit(ctx->expr(1));
+    cfg->current_bb->add_IRInstr(new IRInstrXorBit(cfg->current_bb, tmp, "!reg"));
+    return nullptr;
 }

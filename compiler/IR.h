@@ -282,6 +282,56 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+class IRInstrSHL : public IRInstr
+{
+private:
+    string src;
+    string count;
+public:
+    IRInstrSHL(BasicBlock *bb, string src, string count) : IRInstr(bb), src(src), count(count) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrSHR : public IRInstr
+{
+private:
+    string src;
+    string count;
+public:
+    IRInstrSHR(BasicBlock *bb, string src, string count) : IRInstr(bb), src(src), count(count) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrAndBit : public IRInstr
+{
+private:
+    string src;
+    string dest;
+public:
+    IRInstrAndBit(BasicBlock *bb, string src, string dest) : IRInstr(bb), src(src), dest(dest) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrOrBit : public IRInstr
+{
+private:
+    string src;
+    string dest;
+public:
+    IRInstrOrBit(BasicBlock *bb, string src, string dest) : IRInstr(bb), src(src), dest(dest) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrXorBit : public IRInstr
+{
+private:
+    string src;
+    string dest;
+public:
+    IRInstrXorBit(BasicBlock *bb, string src, string dest) : IRInstr(bb), src(src), dest(dest) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
 /** The class for a basic block */
 class BasicBlock
 {
@@ -338,6 +388,17 @@ protected:
     string nameFunction;
     antlr4::tree::ParseTree* tree;
     vector<BasicBlock *> bbs;                /**< all the basic blocks of this CFG */
-    BasicBlock *bb_Exit;
-    
 };
+
+class IRInstrMod : public IRInstr {
+    public:
+        IRInstrMod(BasicBlock *bb, string src2)
+            : IRInstr(bb), src2(src2) {}
+    
+        void gen_asm(ostream &o) override;
+    
+    private:
+          
+       string src2;  // Diviseur
+    };
+     

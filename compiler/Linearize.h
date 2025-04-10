@@ -29,8 +29,8 @@ public:
     virtual antlrcpp::Any visitExprVar(ifccParser::ExprVarContext *ctx) override;
     virtual antlrcpp::Any visitExprConst(ifccParser::ExprConstContext *ctx) override;
     virtual antlrcpp::Any visitLvalue(ifccParser::LvalueContext *ctx) override;
-    virtual antlrcpp::Any visitMulDiv(ifccParser::MulDivContext *ctx) override;
-    virtual antlrcpp::Any visitAddSub(ifccParser::AddSubContext *ctx) override;
+    virtual antlrcpp::Any visitExprMulDivMod(ifccParser::ExprMulDivModContext *ctx) override;
+    virtual antlrcpp::Any visitExprAddSub(ifccParser::ExprAddSubContext *ctx) override;
     virtual antlrcpp::Any visitExprUnary(ifccParser::ExprUnaryContext *ctx) override;
     virtual antlrcpp::Any visitExprCompRelationnal(ifccParser::ExprCompRelationnalContext *ctx) override;
     virtual antlrcpp::Any visitExprCompEqual(ifccParser::ExprCompEqualContext *ctx) override;
@@ -45,4 +45,8 @@ public:
     virtual antlrcpp::Any visitCall(ifccParser::CallContext *ctx) override;
     virtual antlrcpp::Any visitExprTable(ifccParser::ExprTableContext *ctx)override;
     virtual antlrcpp::Any visitVarAffectation(ifccParser::VarAffectationContext *ctx)override;
+    virtual antlrcpp::Any visitExprShift(ifccParser::ExprShiftContext *ctx) override;
+    virtual antlrcpp::Any visitExprAndBit(ifccParser::ExprAndBitContext *ctx) override;
+    virtual antlrcpp::Any visitExprOrBit(ifccParser::ExprOrBitContext *ctx) override;
+    virtual antlrcpp::Any visitExprXorBit(ifccParser::ExprXorBitContext *ctx) override;
 };
