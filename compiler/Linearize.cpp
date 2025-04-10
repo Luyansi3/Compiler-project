@@ -431,9 +431,9 @@ antlrcpp::Any Linearize::visitElse_stmt(ifccParser::Else_stmtContext *ctx)
 }
 
 antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
-    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     // Visit the condition expression
     this->visit(ctx->expr(0));
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     BasicBlock *bb_and = new BasicBlock(cfg, cfg->current_bb->label + "_and");
     cfg->add_bb(bb_and);
@@ -449,9 +449,9 @@ antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
     cfg->current_bb->exit_false = bb_false;
     cfg->current_bb = bb_and;
 
-    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     // Visit the condition expression
     this->visit(ctx->expr(1));
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     bb_end->exit_true = cfg->current_bb->exit_true;
     bb_end->exit_false = cfg->current_bb->exit_false;
@@ -466,9 +466,9 @@ antlrcpp::Any Linearize::visitExprAnd(ifccParser::ExprAndContext *ctx) {
 }
 
 antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
-    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     // Visit the condition expression
     this->visit(ctx->expr(0));
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     BasicBlock *bb_or = new BasicBlock(cfg, cfg->current_bb->label + "_or");
     cfg->add_bb(bb_or);
@@ -484,9 +484,9 @@ antlrcpp::Any Linearize::visitExprOr(ifccParser::ExprOrContext *ctx) {
     cfg->current_bb->exit_false = bb_or;
     cfg->current_bb = bb_or;
 
-    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     // Visit the condition expression
     this->visit(ctx->expr(1));
+    cfg->current_bb->test_var_name = cfg->create_new_tempvar();
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, cfg->current_bb->test_var_name, "!reg"));
     bb_end->exit_true = cfg->current_bb->exit_true;
     bb_end->exit_false = cfg->current_bb->exit_false;
