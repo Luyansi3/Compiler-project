@@ -45,4 +45,5 @@ public:
     virtual antlrcpp::Any visitCall(ifccParser::CallContext *ctx) override;
     virtual antlrcpp::Any visitExprTable(ifccParser::ExprTableContext *ctx)override;
     virtual antlrcpp::Any visitVarAffectation(ifccParser::VarAffectationContext *ctx)override;
+    virtual antlrcpp::Any visitExprShift(ifccParser::ExprShiftContext *ctx) override;
 };

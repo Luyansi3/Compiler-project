@@ -248,6 +248,24 @@ void IRInstrNot::gen_asm(ostream &o)
     o << "    movsbl %al, %eax" << "\n";
 }
 
+void IRInstrSHL::gen_asm(ostream &o) {
+    string s = bb->cfg->IR_reg_to_asm(src);
+    string c = bb->cfg->IR_reg_to_asm(count);
+    o << "    movl " << c << ", " << "%edx" << "\n";
+    o << "    movl %eax, %ecx" << "\n";
+    o << "    sall %cl, %edx" << "\n";
+    o << "    movl %edx, %eax" << "\n";
+}
+
+void IRInstrSHR::gen_asm(ostream &o) {
+    string s = bb->cfg->IR_reg_to_asm(src);
+    string c = bb->cfg->IR_reg_to_asm(count);
+    o << "    movl " << c << ", " << "%edx" << "\n";
+    o << "    movl %eax, %ecx" << "\n";
+    o << "    sarl %cl, %edx" << "\n";
+    o << "    movl %edx, %eax" << "\n";
+}
+
 // Generate assembly code for a basic block and its instructions
 void BasicBlock::gen_asm(ostream &o)
 {

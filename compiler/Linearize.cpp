@@ -637,3 +637,19 @@ antlrcpp::Any Linearize::visitVarAffectation(ifccParser::VarAffectationContext *
     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
     return 0;
 }
+antlrcpp::Any Linearize::visitExprShift(ifccParser::ExprShiftContext *ctx) {
+    this->visit(ctx->expr(0));
+    string tmp = cfg->create_new_tempvar();
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+    this->visit(ctx->expr(1));
+
+    if (ctx->opS()->SHL()) {
+        cfg->current_bb->add_IRInstr(new IRInstrSHL(cfg->current_bb, "!reg", tmp));
+    }
+    else if (ctx->opS()->SHR()) {
+        cfg->current_bb->add_IRInstr(new IRInstrSHR(cfg->current_bb, "!reg", tmp));
+    }
+
+    return nullptr;
+}
+

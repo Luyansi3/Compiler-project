@@ -52,6 +52,7 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | opU expr              #ExprUnary
     | expr opM expr         #MulDiv
     | expr opA expr         #AddSub
+    | expr opS expr         #ExprShift
     | expr compRelationnal expr    #ExprCompRelationnal
     | expr compEqual expr    #ExprCompEqual
     | expr AND expr         #ExprAnd
@@ -80,6 +81,7 @@ opU: MINUS | NOT | PLUS;
 
 opA: PLUS | MINUS ;
 opM: DIV | MULT | MOD;
+opS: SHL | SHR;
 
 type: INT ;
 
@@ -117,6 +119,8 @@ EQUAL         : '=';
 PLUS          : '+';
 MINUS         : '-';
 MOD           : '%';
+SHL           : '<<';
+SHR           : '>>';
 NOT           : '!';
 MULT          : '*';
 DIV           : '/';

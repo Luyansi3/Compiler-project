@@ -282,6 +282,26 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+class IRInstrSHL : public IRInstr
+{
+private:
+    string src;
+    string count;
+public:
+    IRInstrSHL(BasicBlock *bb, string src, string count) : IRInstr(bb), src(src), count(count) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrSHR : public IRInstr
+{
+private:
+    string src;
+    string count;
+public:
+    IRInstrSHR(BasicBlock *bb, string src, string count) : IRInstr(bb), src(src), count(count) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
 /** The class for a basic block */
 class BasicBlock
 {
