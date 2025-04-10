@@ -302,6 +302,16 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+class IRInstrAndBit : public IRInstr
+{
+private:
+    string src;
+    string dest;
+public:
+IRInstrAndBit(BasicBlock *bb, string src, string dest) : IRInstr(bb), src(src), dest(dest) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
 /** The class for a basic block */
 class BasicBlock
 {

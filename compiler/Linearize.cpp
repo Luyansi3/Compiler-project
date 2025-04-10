@@ -653,3 +653,11 @@ antlrcpp::Any Linearize::visitExprShift(ifccParser::ExprShiftContext *ctx) {
     return nullptr;
 }
 
+antlrcpp::Any Linearize::visitExprAndBit(ifccParser::ExprAndBitContext *ctx) {
+    this->visit(ctx->expr(0));
+    string tmp = cfg->create_new_tempvar();
+    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+    this->visit(ctx->expr(1));
+    cfg->current_bb->add_IRInstr(new IRInstrAndBit(cfg->current_bb, tmp, "!reg"));
+    return nullptr;
+}

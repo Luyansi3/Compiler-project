@@ -55,6 +55,7 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | expr opS expr         #ExprShift
     | expr compRelationnal expr    #ExprCompRelationnal
     | expr compEqual expr    #ExprCompEqual
+    | expr ANDBIT expr      #ExprAndBit
     | expr AND expr         #ExprAnd
     | expr OR expr           #ExprOr
     | affectation           #ExprAffectation 
@@ -121,6 +122,7 @@ MINUS         : '-';
 MOD           : '%';
 SHL           : '<<';
 SHR           : '>>';
+ANDBIT        : '&';
 NOT           : '!';
 MULT          : '*';
 DIV           : '/';

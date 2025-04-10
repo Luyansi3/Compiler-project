@@ -266,6 +266,12 @@ void IRInstrSHR::gen_asm(ostream &o) {
     o << "    movl %edx, %eax" << "\n";
 }
 
+void IRInstrAndBit::gen_asm(ostream &o) {
+    string s = bb->cfg->IR_reg_to_asm(src);
+    string d = bb->cfg->IR_reg_to_asm(dest);
+    o << "    andl " << s << ", " << d << "\n";
+}
+
 // Generate assembly code for a basic block and its instructions
 void BasicBlock::gen_asm(ostream &o)
 {
