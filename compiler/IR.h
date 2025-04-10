@@ -308,7 +308,7 @@ private:
     string src;
     string dest;
 public:
-IRInstrAndBit(BasicBlock *bb, string src, string dest) : IRInstr(bb), src(src), dest(dest) {}
+    IRInstrAndBit(BasicBlock *bb, string src, string dest) : IRInstr(bb), src(src), dest(dest) {}
     virtual void gen_asm(ostream &o) override;
 };
 
@@ -318,7 +318,17 @@ private:
     string src;
     string dest;
 public:
-IRInstrOrBit(BasicBlock *bb, string src, string dest) : IRInstr(bb), src(src), dest(dest) {}
+    IRInstrOrBit(BasicBlock *bb, string src, string dest) : IRInstr(bb), src(src), dest(dest) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrXorBit : public IRInstr
+{
+private:
+    string src;
+    string dest;
+public:
+    IRInstrXorBit(BasicBlock *bb, string src, string dest) : IRInstr(bb), src(src), dest(dest) {}
     virtual void gen_asm(ostream &o) override;
 };
 

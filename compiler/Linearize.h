@@ -48,4 +48,5 @@ public:
     virtual antlrcpp::Any visitExprShift(ifccParser::ExprShiftContext *ctx) override;
     virtual antlrcpp::Any visitExprAndBit(ifccParser::ExprAndBitContext *ctx) override;
     virtual antlrcpp::Any visitExprOrBit(ifccParser::ExprOrBitContext *ctx) override;
+    virtual antlrcpp::Any visitExprXorBit(ifccParser::ExprXorBitContext *ctx) override;
 };

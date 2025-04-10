@@ -56,6 +56,7 @@ expr: OPENPAR expr CLOSEPAR #ExprPar
     | expr compRelationnal expr    #ExprCompRelationnal
     | expr compEqual expr    #ExprCompEqual
     | expr ANDBIT expr      #ExprAndBit
+    | expr XORBIT expr      #ExprXorBit
     | expr ORBIT expr       #ExprOrBit
     | expr AND expr         #ExprAnd
     | expr OR expr           #ExprOr
@@ -125,6 +126,7 @@ SHL           : '<<';
 SHR           : '>>';
 ANDBIT        : '&';
 ORBIT         : '|';
+XORBIT        : '^';
 NOT           : '!';
 MULT          : '*';
 DIV           : '/';
