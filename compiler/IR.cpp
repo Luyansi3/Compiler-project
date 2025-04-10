@@ -272,6 +272,12 @@ void IRInstrAndBit::gen_asm(ostream &o) {
     o << "    andl " << s << ", " << d << "\n";
 }
 
+void IRInstrOrBit::gen_asm(ostream &o) {
+    string s = bb->cfg->IR_reg_to_asm(src);
+    string d = bb->cfg->IR_reg_to_asm(dest);
+    o << "    orl " << s << ", " << d << "\n";
+}
+
 // Generate assembly code for a basic block and its instructions
 void BasicBlock::gen_asm(ostream &o)
 {

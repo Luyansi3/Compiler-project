@@ -47,4 +47,5 @@ public:
     virtual antlrcpp::Any visitVarAffectation(ifccParser::VarAffectationContext *ctx)override;
     virtual antlrcpp::Any visitExprShift(ifccParser::ExprShiftContext *ctx) override;
     virtual antlrcpp::Any visitExprAndBit(ifccParser::ExprAndBitContext *ctx) override;
+    virtual antlrcpp::Any visitExprOrBit(ifccParser::ExprOrBitContext *ctx) override;
 };
