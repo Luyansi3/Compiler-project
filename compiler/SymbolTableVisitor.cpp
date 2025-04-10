@@ -121,6 +121,7 @@ antlrcpp::Any SymbolTableVisitor::visitTableAffectation(ifccParser::TableAffecta
     flagVar.used = false;
     flagVar.functionName = nameCurrentFunction;
     flagVar.varName = varName;
+    flagVar.isTable = true;
     this->index -= (tableSize) * 4;
     string var = varName + "!" + scopeString; // create the right format for the variable to store it in the table
                                                 // like this each variable+scope is unique
@@ -191,9 +192,56 @@ antlrcpp::Any SymbolTableVisitor::visitExprVar(ifccParser::ExprVarContext *ctx)
         cerr << "Variable " << varName << " dans " << nameCurrentFunction << " non déclarée" << endl;
         exit(1);
     }
+    else if (symbolTableVar[var].isTable)
+    {
+        cerr << "Utilisation du pointeur " << varName << " dans " << nameCurrentFunction << endl;
+    }
 
     return 0;
 }
+
+antlrcpp::Any SymbolTableVisitor::visitExprTable(ifccParser::ExprTableContext *ctx)
+{
+
+    string varName = ctx->VAR()->getText();
+    bool find = false;
+    string var = varName + "!" + scopeString;
+
+    size_t pos_bang = var.find_last_of('!');
+    size_t pos_ = var.find_last_of('_');
+    while (pos_ > pos_bang && pos_ != string::npos)
+    {
+        if (symbolTableVar.find(var) != symbolTableVar.end())
+        {
+            find = true;
+            symbolTableVar[var].used = true;
+
+            break;
+        }
+        pos_ = var.find_last_of('_');
+
+        if (pos_ != string::npos)
+        {
+            var.erase(pos_);
+        }
+    }
+    
+
+    if (!find)
+    {
+        cerr << "Tableau " << varName << " dans " << nameCurrentFunction << " non déclarée" << endl;
+        exit(1);
+    }
+    else if (!symbolTableVar[var].isTable)
+    {
+        cerr << "Variable " << varName << " dans " << nameCurrentFunction << " utilisée en tant que tableau" << endl;
+        exit(1);
+    }
+    
+
+    return 0;
+}
+
 
 // Visit the call of a function
 antlrcpp::Any SymbolTableVisitor::visitCall(ifccParser::CallContext *ctx)
@@ -288,6 +336,7 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_param(ifccParser::Decl_paramContext 
     flagVar.affected = false;
     flagVar.used = false;
     flagVar.functionName = nameCurrentFunction;
+    flagVar.isTable = false;
     flagVar.varName = varName;
     index -= 4;
     // we add _1 because params are not inside the block but have the scope so we add it manually
@@ -315,11 +364,13 @@ antlrcpp::Any SymbolTableVisitor::visitClassicDeclaration(ifccParser::ClassicDec
     flagVar.affected = false;
     flagVar.used = false;
     flagVar.functionName = nameCurrentFunction;
+    flagVar.isTable = false;
     flagVar.varName = varName;
     int val=0;
     if (ctx->constante())
     {
         val=stoi(ctx->constante()->getText());
+        flagVar.isTable = true;
         this->index-=(val-1)*4;
     }
     else{
@@ -351,6 +402,7 @@ antlrcpp::Any SymbolTableVisitor::visitVarAffectation(ifccParser::VarAffectation
     flagVar.used = false;
     flagVar.functionName = nameCurrentFunction;
     flagVar.varName = varName;
+    flagVar.isTable = false;
     this->index -= 4;
     string var = varName + "!" + scopeString; // create the right format for the variable to store it in the table
                                                 // like this each variable+scope is unique

@@ -81,7 +81,14 @@ int main(int argn, const char **argv)
     for (auto it=cfg->getSymbolIndex().begin(); it != cfg->getSymbolIndex().end(); ++it){
       if (!it->second.used && it->first != "!returnVal")
       {
+        if (it->second.isTable)
+        {
+          cerr << "Tableau " << it->second.varName << " dans " << it->second.functionName << " n'est jamais utilisé" <<endl;
+        }
+        else{
           cerr << "Var " << it->second.varName << " dans " << it->second.functionName << " n'est jamais utilisé" <<endl;
+        }
+        
       }
     }
   }

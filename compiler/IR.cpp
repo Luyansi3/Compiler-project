@@ -343,7 +343,7 @@ string CFG::create_new_tempvar()
 {
     nextFreeSymbolIndex -= 4;
     string tmpVar = "!tmp" + to_string(abs(nextFreeSymbolIndex));
-    FlagVar flag = {nextFreeSymbolIndex, false, false, nameFunction, tmpVar};
+    FlagVar flag = {nextFreeSymbolIndex, false, false, false, nameFunction, tmpVar};
     symbolIndex.insert({tmpVar, flag});
     return tmpVar;
 }
