@@ -994,11 +994,6 @@ antlrcpp::Any Linearize::visitVarAffectation(ifccParser::VarAffectationContext *
 
 
 antlrcpp::Any Linearize::visitExprShift(ifccParser::ExprShiftContext *ctx) {
-    this->visit(ctx->expr(0));
-    string tmp = cfg->create_new_tempvar();
-    cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
-    this->visit(ctx->expr(1));
-
 
     int resultLeft, resultRight;
     bool leftConst = false , rightConst= false;
