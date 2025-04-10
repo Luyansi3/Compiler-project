@@ -102,9 +102,8 @@ public:
 class IRInstrEpilogue : public IRInstr
 {
 public:
-    IRInstrEpilogue(BasicBlock *bb) : IRInstr(bb){}
+    IRInstrEpilogue(BasicBlock *bb) : IRInstr(bb) {}
     virtual void gen_asm(ostream &o) override;
-
 };
 
 // Class for addition
@@ -173,6 +172,34 @@ private:
 
 public:
     IRInstrJump(BasicBlock *bb, string label) : IRInstr(bb), label(label) {}
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrMem : public IRInstr
+{
+private:
+    string index; // register holding the index (ex: !reg)
+    string base;  // base address (variable like a, b, etc.)
+    string src;   // the source value to store (ex: !tmp1)
+
+public:
+    IRInstrMem(BasicBlock *bb, string src, string index, string base)
+        : IRInstr(bb), src(src), index(index), base(base) {}
+
+    virtual void gen_asm(ostream &o) override;
+};
+
+class IRInstrCopyMem : public IRInstr
+{
+private:
+    string index;
+    string base;
+    string src;
+
+public:
+    IRInstrCopyMem(BasicBlock *bb, string src, string index, string base)
+        : IRInstr(bb), src(src), index(index), base(base) {}
+
     virtual void gen_asm(ostream &o) override;
 };
 /**  The class for a basic block */
