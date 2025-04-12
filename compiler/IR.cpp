@@ -218,7 +218,6 @@ void IRInstrMem::gen_asm(ostream &o)
 
 void IRInstrCopyMem::gen_asm(ostream &o)
 {
-    string destReg = bb->cfg->IR_reg_to_asm(src);    // Not really "dest", it's where to store value (%eax)
     string indexReg = bb->cfg->IR_reg_to_asm(index); // index is memory, like -16(%rbp)
     string baseStr = bb->cfg->IR_reg_to_asm(base);   // base address of array, like -64(%rbp)
 
@@ -232,7 +231,7 @@ void IRInstrCopyMem::gen_asm(ostream &o)
     // Étendre %ecx (32 bits) en %rcx (64 bits)
     o << "    movslq %ecx, %rcx\n";
     o << "    neg %rcx\n";
-    o << "movl " << displacement << "(%rbp," << "%rcx, 4), %eax\n";
+    o << "    movl " << displacement << "(%rbp," << "%rcx, 4), %eax\n";
 }
 
 void IRInstrJump::gen_asm(ostream &o)
