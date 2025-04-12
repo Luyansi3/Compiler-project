@@ -40,7 +40,7 @@ while_stmt: WHILE OPENPAR expr CLOSEPAR (instruction | block) ;
 
 affectation: lvalue op_compose expr;
 
-op_compose: EQUAL | PLUSEQUAL | MOINSEQUAL | MULTEQUAL | DIVEQUAL | SHLEQUAL | SHREQUAL | XOREQUAL;
+op_compose: EQUAL | PLUSEQUAL | MOINSEQUAL | MULTEQUAL | DIVEQUAL | SHLEQUAL | SHREQUAL | XOREQUAL | OREQUAL;
 
 array_litteral : OPENCROCHET (expr (COMMA expr)*)? CLOSECROCHET;
 return_stmt: RETURN expr ;
@@ -139,6 +139,7 @@ DIVEQUAL      : '/=';
 SHLEQUAL      : '<<=';
 SHREQUAL      : '>>=';
 XOREQUAL      : '^=';
+OREQUAL       : '|=';
 COMMA         : ',';
 COMMENT : '/*' .*? '*/' -> skip ;
 DIRECTIVE : '#' .*? '\n' -> skip ;
