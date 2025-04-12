@@ -170,6 +170,20 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
                 cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
             }
         }
+        else if (ctx->op_compose()->MODEQUAL()) {
+            string tmp = cfg->create_new_tempvar();
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+            if (tab) {
+                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", tableVar));
+                cfg->current_bb->add_IRInstr(new IRInstrMod(cfg->current_bb, tmp));
+                cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, "!reg", index, varName));
+            }
+            else {
+                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+                cfg->current_bb->add_IRInstr(new IRInstrMod(cfg->current_bb, tmp));
+                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
+            }
+        }
     }
 
     return 0;
