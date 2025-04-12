@@ -82,18 +82,20 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
             }
             else {
                 cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, varName, "!reg"));
-                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
             }
         }
         else if (ctx->op_compose()->MOINSEQUAL()) {
+            string tmp = cfg->create_new_tempvar();
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
             if(tab){
                 cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, "!reg", tableVar));
                 cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, tableVar, index, varName));
                 cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", tableVar));
             }
             else {
-                cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, "!reg", varName));
-                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
+
+                cfg->current_bb->add_IRInstr(new IRInstrSub(cfg->current_bb, tmp, "!reg"));
             }
         }
         else if (ctx->op_compose()->MULTEQUAL()) {
@@ -103,7 +105,6 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
             }
             else {
                 cfg->current_bb->add_IRInstr(new IRInstrMul(cfg->current_bb, varName, "!reg"));
-                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
             }
         }
         else if (ctx->op_compose()->DIVEQUAL()) {
@@ -117,7 +118,6 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
             else {
                 cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
                 cfg->current_bb->add_IRInstr(new IRInstrDiv(cfg->current_bb, tmp));
-                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
             }
         }
         else if (ctx->op_compose()->SHLEQUAL()) {
@@ -127,7 +127,6 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
             }
             else {
                 cfg->current_bb->add_IRInstr(new IRInstrSHL(cfg->current_bb, "!reg", varName));
-                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
             }
         }
         else if (ctx->op_compose()->SHREQUAL()) {
@@ -137,7 +136,6 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
             }
             else {
                 cfg->current_bb->add_IRInstr(new IRInstrSHR(cfg->current_bb, "!reg", varName));
-                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
             }
         }
         else if (ctx->op_compose()->XOREQUAL()) {
@@ -147,7 +145,6 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
             }
             else {
                 cfg->current_bb->add_IRInstr(new IRInstrXorBit(cfg->current_bb, varName, "!reg"));
-                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
             }
         }
         else if (ctx->op_compose()->OREQUAL()) {
@@ -157,7 +154,6 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
             }
             else {
                 cfg->current_bb->add_IRInstr(new IRInstrOrBit(cfg->current_bb, varName, "!reg"));
-                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
             }
         }
         else if (ctx->op_compose()->ANDEQUAL()) {
@@ -167,7 +163,6 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
             }
             else {
                 cfg->current_bb->add_IRInstr(new IRInstrAndBit(cfg->current_bb, varName, "!reg"));
-                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
             }
         }
         else if (ctx->op_compose()->MODEQUAL()) {
@@ -181,9 +176,9 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
             else {
                 cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", varName));
                 cfg->current_bb->add_IRInstr(new IRInstrMod(cfg->current_bb, tmp));
-                cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
             }
         }
+        this->visit(ctx->lvalue());
     }
 
     return 0;
