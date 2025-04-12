@@ -57,15 +57,16 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
     }
     else
     {
-        string varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
-        string index;
+        string varName;
+        varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
         if (ctx->lvalue()->expr())
         {
             this->visit(ctx->lvalue()->expr());
-            index = cfg->create_new_tempvar();
+            string index = cfg->create_new_tempvar();
             cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, index, "!reg"));
+            varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
             cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, index, varName));
-            varName = cfg->create_new_tempvar(); // Reajust varName to store the table memory address
+            varName = cfg->create_new_tempvar(); // Reajust varName to store the table memory address to avoid duplicates if
             cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
         }
 
@@ -601,8 +602,15 @@ antlrcpp::Any Linearize::visitWhile_stmt(ifccParser::While_stmtContext *ctx)
 antlrcpp::Any Linearize::visitExprSuffixe(ifccParser::ExprSuffixeContext *ctx)
 {
     string varName;
-    if (ctx->lvalue()->VAR()) {
+    varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
+    if (ctx->lvalue()->expr()) {
+        this->visit(ctx->lvalue()->expr());
+        string index = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, index, "!reg"));
         varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
+        cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, index, varName));
+        varName = cfg->create_new_tempvar(); // Reajust varName to store the table memory address to avoid duplicates if
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
     }
 
     if (ctx->opD()->PLUSPLUS())
@@ -651,8 +659,15 @@ antlrcpp::Any Linearize::visitExprSuffixe(ifccParser::ExprSuffixeContext *ctx)
 
 antlrcpp::Any Linearize::visitExprPrefixe(ifccParser::ExprPrefixeContext *ctx) {
     string varName;
-    if (ctx->lvalue()->VAR()) {
+    varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
+    if (ctx->lvalue()->expr()) {
+        this->visit(ctx->lvalue()->expr());
+        string index = cfg->create_new_tempvar();
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, index, "!reg"));
         varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
+        cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, index, varName));
+        varName = cfg->create_new_tempvar(); // Reajust varName to store the table memory address to avoid duplicates if
+        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
     }
 
     if (ctx->opD()->PLUSPLUS()) {
