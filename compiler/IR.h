@@ -194,11 +194,10 @@ class IRInstrCopyMem : public IRInstr
 private:
     string index;
     string base;
-    string src;
 
 public:
-    IRInstrCopyMem(BasicBlock *bb, string src, string index, string base)
-        : IRInstr(bb), src(src), index(index), base(base) {}
+    IRInstrCopyMem(BasicBlock *bb, string index, string base)
+        : IRInstr(bb), index(index), base(base) {}
 
     virtual void gen_asm(ostream &o) override;
 };
