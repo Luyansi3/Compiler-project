@@ -94,7 +94,7 @@ Use the provided `Makefile` to build the project. The Makefile includes configur
 - `ANTLRLIB`: Path to ANTLR library directory
 
 ### Project Structure
-![Compiler Architecture](UML class.jpeg "C Compiler Architecture")
+![Compiler Architecture](UML_class.jpeg "C Compiler Architecture")
 
 ### Usage
 
