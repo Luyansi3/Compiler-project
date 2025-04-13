@@ -79,11 +79,14 @@ antlrcpp::Any Linearize::visitAffectation(ifccParser::AffectationContext *ctx)
         varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
         if (ctx->lvalue()->expr())
         {
-            this->visit(ctx->lvalue()->expr());
-            string index = cfg->create_new_tempvar();
-            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, index, "!reg"));
+            auto e = this->visit(ctx->lvalue()->expr());
+            if (e.is<int>()) {
+                int result = e.as<int>();
+                cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", result));
+            }
+
             varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
-            cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, index, varName));
+            cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, "!reg", varName));
             varName = cfg->create_new_tempvar(); // Reajust varName to store the table memory address to avoid duplicates if
             cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
         }
@@ -274,9 +277,6 @@ antlrcpp::Any Linearize::visitLvalue(ifccParser::LvalueContext *ctx)
             int result = e.as<int>();
             cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", result));
         }
-        // else{
-        //     cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpIndex, "!reg")); // stocker valeur dans tmpIndex
-        // }
 
         string baseVarName = cfg->getVarName(ctx->VAR()->getText(), scopeString);
         
@@ -864,11 +864,13 @@ antlrcpp::Any Linearize::visitExprSuffixe(ifccParser::ExprSuffixeContext *ctx)
     string varName;
     varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
     if (ctx->lvalue()->expr()) {
-        this->visit(ctx->lvalue()->expr());
-        string index = cfg->create_new_tempvar();
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, index, "!reg"));
+        auto e = this->visit(ctx->lvalue()->expr());
+        if (e.is<int>()) {
+            int result = e.as<int>();
+            cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", result));
+        }
         varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
-        cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, index, varName));
+        cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, "!reg", varName));
         varName = cfg->create_new_tempvar(); // Reajust varName to store the table memory address to avoid duplicates if
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
     }
@@ -921,11 +923,13 @@ antlrcpp::Any Linearize::visitExprPrefixe(ifccParser::ExprPrefixeContext *ctx) {
     string varName;
     varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
     if (ctx->lvalue()->expr()) {
-        this->visit(ctx->lvalue()->expr());
-        string index = cfg->create_new_tempvar();
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, index, "!reg"));
+        auto e = this->visit(ctx->lvalue()->expr());
+        if (e.is<int>()) {
+            int result = e.as<int>();
+            cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", result));
+        }
         varName = cfg->getVarName(ctx->lvalue()->VAR()->getText(), scopeString);
-        cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, index, varName));
+        cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, "!reg", varName));
         varName = cfg->create_new_tempvar(); // Reajust varName to store the table memory address to avoid duplicates if
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, varName, "!reg"));
     }
@@ -965,15 +969,13 @@ antlrcpp::Any Linearize::visitExprTable(ifccParser::ExprTableContext *ctx)
     string tmpIndex = cfg->create_new_tempvar();
     if (e1.is<int>()) {
         int result = e1.as<int>();
-        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmpIndex, result));
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", result));
     }
-    else{
-        cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpIndex, "!reg"));
-    }
+
     string baseVarName =cfg->getVarName( ctx->VAR()->getText(),scopeString);
 
-    cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, tmpIndex, baseVarName));
-    return 0;
+    cfg->current_bb->add_IRInstr(new IRInstrCopyMem(cfg->current_bb, "!reg", baseVarName));
+    return nullptr;
 }
 
 
