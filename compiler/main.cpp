@@ -68,20 +68,27 @@ int main(int argn, const char **argv)
   //Vérif de declration et utilisation de toutes les fonctions
   for (auto it=SymbolTableVisitor::symbolTableFonction.begin(); it != SymbolTableVisitor::symbolTableFonction.end(); it++) {
     if (!it->second.declared) {
-      cerr << "Fonction" << it->first << " n'est pas déclarée" << endl;
+      cerr << "Fonction " << it->first << " n'est pas déclarée" << endl;
       exit(1);
     }
     if (!it->second.used)
-      cerr << "Fonction" << it->first << " n'est jamais utilisée" << endl;
+      cerr << "Fonction " << it->first << " n'est jamais utilisée" << endl;
       
   }
 
   //Vérfi d'utilisation des variables
   for (CFG *cfg : SymbolTableVisitor::cfg_liste) {
     for (auto it=cfg->getSymbolIndex().begin(); it != cfg->getSymbolIndex().end(); ++it){
-      if (!it->second.used)
+      if (!it->second.used && it->first != "!returnVal")
       {
-          cerr << "Var " << it->first << " n'est jamais utilisé" <<endl;
+        if (it->second.isTable)
+        {
+          cerr << "Tableau " << it->second.varName << " dans " << it->second.functionName << " n'est jamais utilisé" <<endl;
+        }
+        else{
+          cerr << "Var " << it->second.varName << " dans " << it->second.functionName << " n'est jamais utilisé" <<endl;
+        }
+        
       }
     }
   }

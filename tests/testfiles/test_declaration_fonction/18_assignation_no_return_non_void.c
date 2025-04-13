@@ -5,7 +5,7 @@ int add (int a, int b) {
 
 int main() {
     int a = 0;
-    int b = 12;
+    int b = 15;
     a = add(a,b);
 
     return a;

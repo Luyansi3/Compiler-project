@@ -5,7 +5,7 @@ void add(int a, int b) {
 
 int main() {
     int a = 0;
-    int b = 4532;
+    int b = 14;
     add(a, b);
 
 
