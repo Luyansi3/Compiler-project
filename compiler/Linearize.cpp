@@ -303,18 +303,19 @@ antlrcpp::Any Linearize::visitExprAddSub(ifccParser::ExprAddSubContext *ctx)
 
 
 antlrcpp::Any Linearize::visitCall(ifccParser::CallContext *ctx) {
-    //Obtentino du label de la fonction
+    //Obtention du label de la fonction
     string label = ctx->VAR()->getText();
     vector<string> params;
 
-    for (auto expression : ctx->liste_param()->expr())
-    {
+    //Obtention des params
+    for (auto expression : ctx->liste_param()->expr()) {
         string tmp = cfg->create_new_tempvar();
         this->visit(expression);
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp, "!reg"));
         params.push_back(tmp);
     }
 
+    //Ajouter l'instruction call
     cfg->current_bb->add_IRInstr(new IrInstrCall(cfg->current_bb, label, params));
     
    

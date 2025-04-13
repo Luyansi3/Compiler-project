@@ -44,17 +44,29 @@ antlrcpp::Any SymbolTableVisitor::visitProg(ifccParser::ProgContext *ctx)
     flag.nombreParams = 0;
     symbolTableFonction.insert({"getchar", flag});
 
+    
+
+    
+    //Visit all the fonctions declarations
+    for (auto decl_fonction : ctx->pre_decl_fonction())
+        this->visit(decl_fonction);
+
+
+    //Visiting the main block and creating its CFG
+
     // Start of the scopeString
     scopeString = "main";
     nameCurrentFunction = "main";
-
-    // Visiting the main block and creating its CFG
+    unordered_map<string, FlagVar> newSymbolTable;
+    index = -4;
+    symbolTableVar = newSymbolTable;
     this->visit(ctx->block());
     CFG *cfg = new CFG(symbolTableVar, "main", ctx->block(), 0);
     cfg_liste.push_back(cfg);
 
-    // Visit all the fonctions declarations
-    for (auto decl_fonction : ctx->decl_fonction())
+
+    //Visit all the fonctions declarations
+    for (auto decl_fonction : ctx->post_decl_fonction())
         this->visit(decl_fonction);
 
     return 0;
@@ -255,17 +267,15 @@ antlrcpp::Any SymbolTableVisitor::visitCall(ifccParser::CallContext *ctx)
         flag.declared = false;
         flag.used = true;
         flag.nombreParams = nbParams;
+        flag.type = "";
         symbolTableFonction.insert({label, flag});
-        cerr << "La fonction " << label << " est appelée avant d'être déclarée" << endl;
-    }
-    else if (symbolTableFonction[label].nombreParams == nbParams)
-    {
-        symbolTableFonction[label].used = true;
-    }
-    else
-    {
-        cerr << "La fonction " << label << " est appelée avec le mauvais nb de params" << endl;
+        if (label != "putchar" && label != "getchar")
+            cerr << "La fonction " << label << " est appelée avant d'être déclarée" << endl;
+    } else if (symbolTableFonction[label].nombreParams != nbParams) {
+        cerr << "La fonction " << label << " est appelée avec le mauvais nombre de paramètres" << endl;
         exit(1);
+    } else {
+        symbolTableFonction[label].used = true;
     }
 
     for (auto expression : ctx->liste_param()->expr())
@@ -276,27 +286,28 @@ antlrcpp::Any SymbolTableVisitor::visitCall(ifccParser::CallContext *ctx)
     return 0;
 }
 
-// Visit the declaration of a function
-antlrcpp::Any SymbolTableVisitor::visitDecl_fonction(ifccParser::Decl_fonctionContext *ctx)
-{
+
+// Visit the declaration of a function 
+antlrcpp::Any SymbolTableVisitor::visitPre_decl_fonction(ifccParser::Pre_decl_fonctionContext *ctx) {
     int nbParams = ctx->decl_params()->decl_param().size();
     string label = ctx->VAR()->getText();
+    string type = ctx->typeFonc()->getText();
 
     if (symbolTableFonction.find(label) != symbolTableFonction.end())
     {
         if (symbolTableFonction[label].declared)
         {
             cerr << "La fonction " << label << " a déjà été déclarée" << endl;
-            exit(1);
-        }
-        else if (symbolTableFonction[label].nombreParams == nbParams)
-        {
+            exit(1); 
+        } else if (symbolTableFonction[label].nombreParams != nbParams) {
+            cerr << "La fonction " << label << " est appelée avec le mauvais nombre d'arguments" << endl;
+        } else if (symbolTableFonction[label].type != "" && symbolTableFonction[label].type != type) {
+            cerr << "La fonction " << label << " est appelée avec le mauvais type de retour" << endl;
+        } else if (symbolTableFonction[label].type == ""){
             symbolTableFonction[label].declared = true;
-        }
-        else
-        {
-            cerr << "La fonction " << label << " est appelée avec le mauvais nb d'arguments" << endl;
-            exit(1);
+            symbolTableFonction[label].type = type;         
+        } else {
+            symbolTableFonction[label].declared = true;
         }
     }
     else
@@ -305,6 +316,56 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_fonction(ifccParser::Decl_fonctionCo
         flag.used = false;
         flag.declared = true;
         flag.nombreParams = nbParams;
+        flag.type = type;
+        symbolTableFonction.insert({label, flag});
+    }
+    
+    //Reinitialize the var symbol table and so the index
+    unordered_map<string, FlagVar> newSymbolTable;
+    index = -4;
+    symbolTableVar = newSymbolTable;
+
+    scopeString = label;
+
+    nameCurrentFunction = label;
+
+    // Visting the params and block associated with the fonc and then creating its own CFG
+    this->visit(ctx->decl_params());
+    this->visit(ctx->block());
+    CFG* cfg = new CFG(symbolTableVar, label, ctx->block(), nbParams);
+    cfg_liste.push_back(cfg);
+
+    return 0;       
+}
+
+
+// Visit the declaration of a function 
+antlrcpp::Any SymbolTableVisitor::visitPost_decl_fonction(ifccParser::Post_decl_fonctionContext *ctx) {
+    int nbParams = ctx->decl_params()->decl_param().size();
+    string label = ctx->VAR()->getText();
+    string type = ctx->typeFonc()->getText();
+
+
+    if (symbolTableFonction.find(label) != symbolTableFonction.end()) {
+        if (symbolTableFonction[label].declared) {
+            cerr << "La fonction " << label << " a déjà été déclarée" << endl;
+            exit(1); 
+        } else if (symbolTableFonction[label].nombreParams != nbParams) {
+            cerr << "La fonction " << label << " est appelée avec le mauvais nb d'arguments" << endl;
+        } else if (symbolTableFonction[label].type != "" && symbolTableFonction[label].type != type) {
+            cerr << "La fonction " << label << " est appelée avec le mauvais type de retour" << endl;
+        } else if (symbolTableFonction[label].type == ""){
+            symbolTableFonction[label].declared = true;
+            symbolTableFonction[label].type = type;         
+        } else {
+            symbolTableFonction[label].declared = true;
+        }
+    } else {
+        FlagFonction flag;
+        flag.used = false;
+        flag.declared = true;
+        flag.nombreParams = nbParams;
+        flag.type = type;
         symbolTableFonction.insert({label, flag});
     }
 
@@ -352,6 +413,58 @@ antlrcpp::Any SymbolTableVisitor::visitDecl_param(ifccParser::Decl_paramContext 
         cerr << "Variable " << varName << " dans " << nameCurrentFunction << " deja déclaré" << endl;
         exit(1);
     }
+
+    return 0;
+}
+
+
+antlrcpp::Any SymbolTableVisitor::visitExprCall(ifccParser::ExprCallContext *ctx) {
+    ifccParser::CallContext* callctx = ctx->call();
+
+    string label = callctx->VAR()->getText();
+    int nbParams = callctx->liste_param()->expr().size();
+
+    if (symbolTableFonction.find(label) == symbolTableFonction.end()) {
+        FlagFonction flag;
+        flag.declared = false;
+        flag.used = true;
+        flag.nombreParams = nbParams;
+        flag.type = "int";
+        symbolTableFonction.insert({label, flag});
+        cerr << "La fonction " << label << " est appelée avant d'être déclarée" << endl;
+    } else if (symbolTableFonction[label].type == "") {
+        symbolTableFonction[label].type = "int";
+    } else if (symbolTableFonction[label].type == "void") {
+        cerr << "La fonction " << label << " est appelé avec le mauvais type de retour" << endl;
+        exit(1);
+    }
+
+
+    this->visit(callctx);
+    return 0;
+}
+
+
+ifccParser::CallContext* SymbolTableVisitor::isASimpleCall(ifccParser::ExprParContext *ctx) {
+    if (auto callCtx = dynamic_cast<ifccParser::ExprCallContext *>(ctx->expr())) {
+        return callCtx->call();
+    } else if (auto parCtx = dynamic_cast<ifccParser::ExprParContext*>(ctx->expr())) {
+        return isASimpleCall(parCtx);
+    } else {
+        return nullptr;
+    }
+}
+
+
+
+antlrcpp::Any SymbolTableVisitor::visitInstrExpr(ifccParser::InstrExprContext *ctx) {
+    if (auto parCtx = dynamic_cast<ifccParser::ExprParContext *>(ctx->expr())) {
+        ifccParser::CallContext* callCtx = isASimpleCall(parCtx);
+        this->visit(callCtx);
+    } else {
+        this->visit(ctx->expr());
+    }     
+    
 
     return 0;
 }

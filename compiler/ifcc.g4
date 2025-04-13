@@ -2,21 +2,22 @@ grammar ifcc;
 
 axiom : prog EOF ;
 
-prog : decl_fonction* INT MAIN OPENPAR CLOSEPAR block decl_fonction*;
+prog : pre_decl_fonction* INT MAIN OPENPAR CLOSEPAR block post_decl_fonction*;
 block: OPENCROCHET instructions CLOSECROCHET ;
 
 instructions: (instruction)* ;
 
 instruction: return_stmt  SEMI      #InstrReturn
             | declaration  SEMI     #InstrDecl
-            | expr  SEMI            #InstrExpr
             | call SEMI             #InstrCall
+            | expr  SEMI            #InstrExpr
             | if_stmt               #InstrIf_stmt
             | while_stmt            #InstrWhile_stmt
             | block                 #InstrBlock
             ;
 
-decl_fonction: type VAR OPENPAR decl_params CLOSEPAR block ;
+pre_decl_fonction: typeFonc VAR OPENPAR decl_params CLOSEPAR block ;
+post_decl_fonction: typeFonc VAR OPENPAR decl_params CLOSEPAR block ;
 
 decl_params: decl_param (COMMA decl_param)*
             | ;
@@ -88,12 +89,13 @@ opA: PLUS | MINUS ;
 opM: DIV | MULT | MOD;
 opS: SHL | SHR;
 
+typeFonc : type | VOID ;
 type: INT ;
 
 constante: CONSTINT
          | CONSTCHAR ; 
 
-
+VOID: 'void' ;
 INT: 'int' ;
 RETURN : 'return' ;
 MAIN: 'main';
