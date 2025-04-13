@@ -337,6 +337,16 @@ antlrcpp::Any Linearize::visitExprMulDivMod(ifccParser::ExprMulDivModContext *ct
         if (ctx->opM()->MULT()) return (int) resultLeft * resultRight;
         else if (ctx->opM()->MOD())
         {
+            if (resultRight == 0)
+            {
+                cerr << "Division par 0" << endl; 
+                tmp1 = cfg->create_new_tempvar();
+                cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmp1, resultRight));
+                cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", resultLeft));
+                cfg->current_bb->add_IRInstr(new IRInstrMod(cfg->current_bb, tmp1));
+                return nullptr;
+                // exit(1);
+            } 
             return (int) (resultLeft % resultRight);
         }
         
