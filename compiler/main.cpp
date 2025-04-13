@@ -11,6 +11,7 @@
 #include "IR.h"
 #include "SymbolTableVisitor.h"
 
+#include "Linearize_optimized.h"
 #include "Linearize.h"
 
 using namespace antlr4;
@@ -19,9 +20,10 @@ using namespace std;
 int main(int argn, const char **argv)
 {
   stringstream in;
+  bool optimized = true;
   
   // Check if the correct number of arguments is provided
-  if (argn==2)
+  if (argn>=2)
   {
      ifstream lecture(argv[1]);
      
@@ -32,7 +34,23 @@ int main(int argn, const char **argv)
          exit(1);
      }
      in << lecture.rdbuf();
+     if (argn ==3)
+     {
+        string arg2 = argv[2];
+        if (arg2 == "-O0")
+        {
+          cerr << "Compilation with no optimizations" << endl;
+          optimized = false;
+        }
+        else{
+          cerr << "error: not a right argument : (put -O0 to avoid opitmization)" << argv[2]  << endl;
+          exit(1);
+        }
+        
+     }
+     
   }
+  
   else
   {
       cerr << "usage: ifcc path/to/file.c" << endl ;
@@ -98,8 +116,15 @@ int main(int argn, const char **argv)
 
   //Create the control flow graph (CFG) using the symbol table
   for (CFG *cfg : SymbolTableVisitor::cfg_liste) {
-    Linearize code(cfg);
-    code.visit(cfg->getTree());
+    if (optimized)
+    {
+      Linearize_optimized code(cfg);
+      code.visit(cfg->getTree());
+    }
+    else{
+      Linearize code(cfg);
+      code.visit(cfg->getTree());
+    }
     cfg->gen_asm(cout);
     delete(cfg);
   }
