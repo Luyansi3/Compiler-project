@@ -48,6 +48,25 @@ Our compiler supports:
 ### Scopes
 - Full support for variable scoping rules
 
+## Non supported c elements/bugs
+priority:
+GCC evaluates assignments from right to left, treating everything on the left of the assignment operator as an lvalue. Attempting to modify variables directly within expressions can lead to undefined behavior.
+For example, in an expression like:
+```c
+c = (a = 1) || (b = 2);
+```
+Our compiler evaluates this as two separate assignments combined with the logical OR operator, which is the intuitive reading.
+Meanwhile, GCC interprets it differently, essentially as:
+```c
+c = ((a = 1) || b) = 2;
+```
+This difference can lead to unexpected results when porting code between compilers.
+Lvalue Considerations
+In our implementation:
+
+Each variable on the left side of an assignment is treated as an lvalue
+We follow traditional C semantics for most operations
+
 ## Getting Started
 
 ### Prerequisites
@@ -65,7 +84,7 @@ Use the provided `Makefile` to build the project. The Makefile includes configur
 - `ANTLRLIB`: Path to ANTLR library directory
 
 ### Project Structure
-![Alt text]("UML class.jpeg")
+![Alt text](UML class.jpeg)
 
 
 ### Usage
