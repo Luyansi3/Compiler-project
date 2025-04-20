@@ -103,9 +103,9 @@ The default `make` target is used to build the executable compiler program. The 
 After building the compiler, you can use it to compile C source files:
 
 ```
-./ifcc [input_file.c] > [output_file.s]
+./ifcc input_file.c [-O0] [> output_file.s]
 ```
-
+Argument ```-O0``` does no optimization  
 The generated assembly code can then be assembled and linked using standard tools.
 
 ## Testing Tool
@@ -117,11 +117,16 @@ We provide a comprehensive testing framework to verify our compiler's behavior a
 After compiling the program, you can run tests using the following commands:
 
 #### Run all tests:
+##### With no optimizations
 ```
-cd tests
-python3 ifcc-test.py testfiles
+cd compiler
+make test
 ```
-
+##### With optimizations
+```
+cd compiler
+make test_optimized
+```
 #### Run tests for a specific category:
 ```
 python3 ifcc-test.py testfiles/test_if_else
@@ -141,6 +146,8 @@ The testing tool generates multiple output files in the `ifcc-test-output` direc
 
 This allows for easy comparison between our compiler and the GCC reference implementation.
 
+(Currently we have 9 tests not working over 420)  
+
 ## Examples
 
 The compiler can handle programs ranging from simple to complex within the supported feature set:
@@ -155,7 +162,7 @@ int main() {
 More complex program:
 ```c
 int factorial(int n) {
-    if (n <= 1) {
+    if (n == 1 || n < 1) {
         return 1;
     }
     return n * factorial(n-1);
@@ -175,3 +182,6 @@ int main() {
 - BEN BOUZID Selim
 - SANCHEZ Lucas
 - VIALLETON Rémi 
+
+## Github page
+```https://github.com/Luyansi3/Compiler-project```
