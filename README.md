@@ -146,7 +146,7 @@ The testing tool generates multiple output files in the `ifcc-test-output` direc
 
 This allows for easy comparison between our compiler and the GCC reference implementation.
 
-(Currently we have 14 tests not working over 504)  
+(Currently we have 10 tests not working over 423)  
 
 ## Examples
 
