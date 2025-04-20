@@ -3,6 +3,7 @@
 
 
 Linearize_optimized::Linearize_optimized(CFG* cfg): cfg(cfg){
+    // Initialize the scopeString and nameCurrentFunction
     scopeString = cfg->getNameFunction();
     nameCurrentFunction = cfg->getNameFunction();
 }
@@ -97,6 +98,8 @@ antlrcpp::Any Linearize_optimized::visitAffectation(ifccParser::AffectationConte
             int result = e.as<int>();
             cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg",result));
         }
+
+        // Create the appropriate IR instruction based on the operator
         if (ctx->op_compose()->PLUSEQUAL())
         {
             cfg->current_bb->add_IRInstr(new IRInstrAdd(cfg->current_bb, varName, "!reg"));
@@ -148,7 +151,7 @@ antlrcpp::Any Linearize_optimized::visitAffectation(ifccParser::AffectationConte
 antlrcpp::Any Linearize_optimized::visitTableAffectation(ifccParser::TableAffectationContext *ctx)
 {
     int i = 0;
-    string baseVarName = cfg->getVarName(ctx->VAR()->getText(), scopeString); // base du tableau
+    string baseVarName = cfg->getVarName(ctx->VAR()->getText(), scopeString); // Array base
 
     for (auto &expr : ctx->array_litteral()->expr())
     {
@@ -159,25 +162,26 @@ antlrcpp::Any Linearize_optimized::visitTableAffectation(ifccParser::TableAffect
             cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmpValue, result));
         }
         else{
-            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpValue, "!reg")); // stocker valeur dans tmpValue
+            cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmpValue, "!reg")); // store the expr evaluation into tmpValue
         }
         
 
-        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", i)); // charger i dans !reg
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", i)); // store the index into !reg
 
-        // Utiliser tmpValue (la valeur) et !reg (l'index)
+        // Write the value at the appropriate index in the array
         cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, tmpValue, "!reg", baseVarName));
         i++;
     }
 
+    // Load 0 in the array if the size is bigger than the number of elements
     while (ctx->constante() && i < stoi(ctx->constante()->getText()))
     {
         string tmpValue = cfg->create_new_tempvar();
-        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmpValue, 0)); // stocker valeur dans tmpValue
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmpValue, 0)); // store 0 into tmpValue
 
-        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", i)); // charger i dans !reg
+        cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", i)); // store the index into !reg
 
-        // Utiliser tmpValue (la valeur) et !reg (l'index)
+        // Write the value at the appropriate index in the array
         cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, tmpValue, "!reg", baseVarName));
         i++;
     }
@@ -200,6 +204,7 @@ antlrcpp::Any Linearize_optimized::visitExprUnary(ifccParser::ExprUnaryContext *
 {
     auto e = this->visit(ctx->expr());
             
+    // If the expression has a unary minus operator, add a negation instruction
     if (ctx->opU()->MINUS())
     {
         if (e.is<int>()) {
@@ -208,6 +213,8 @@ antlrcpp::Any Linearize_optimized::visitExprUnary(ifccParser::ExprUnaryContext *
         }
         cfg->current_bb->add_IRInstr(new IRInstrNeg(cfg->current_bb, "!reg"));
     }
+
+    // If the expression has a unary not operator, add a not instruction
     else if(ctx->opU()->NOT()){
         if (e.is<int>()) {
             int result = e.as<int>();
@@ -215,6 +222,8 @@ antlrcpp::Any Linearize_optimized::visitExprUnary(ifccParser::ExprUnaryContext *
         }
         cfg->current_bb->add_IRInstr(new IRInstrNot(cfg->current_bb, "!reg"));
     }
+
+    // If the expression has a unary plus operator, just return the value if it is an integer
     else if (ctx->opU()->PLUS())
     {
         if (e.is<int>()) {
@@ -241,6 +250,7 @@ antlrcpp::Any Linearize_optimized::visitExprPar(ifccParser::ExprParContext *ctx)
 // Visit a constant expression
 antlrcpp::Any Linearize_optimized::visitExprConst(ifccParser::ExprConstContext *ctx)
 {
+    // Directly return the constant value
     int retval;
     if (ctx->constante()->CONSTINT())
         retval = stoi(ctx->constante()->CONSTINT()->getText());
@@ -255,8 +265,6 @@ antlrcpp::Any Linearize_optimized::visitExprConst(ifccParser::ExprConstContext *
 antlrcpp::Any Linearize_optimized::visitLvalue(ifccParser::LvalueContext *ctx)
 {
     // // Visit the expression and the left-hand side of the assignment
-    // // mov !reg , !tmp
-    // this->visit(ctx->lvalue());
     if (ctx->VAR() && !ctx->expr())
     {
         string varName = cfg->getVarName(ctx->VAR()->getText(), scopeString);
@@ -277,7 +285,6 @@ antlrcpp::Any Linearize_optimized::visitLvalue(ifccParser::LvalueContext *ctx)
 
         string baseVarName = cfg->getVarName(ctx->VAR()->getText(), scopeString);
         
-        // cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, "!reg", tmpValue));
         cfg->current_bb->add_IRInstr(new IRInstrMem(cfg->current_bb, tmpValue, "!reg", baseVarName));
     }
     return 0;
@@ -342,7 +349,6 @@ antlrcpp::Any Linearize_optimized::visitExprMulDivMod(ifccParser::ExprMulDivModC
                 cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", resultLeft));
                 cfg->current_bb->add_IRInstr(new IRInstrMod(cfg->current_bb, tmp1));
                 return nullptr;
-                // exit(1);
             } 
             return (int) (resultLeft % resultRight);
         }
@@ -356,7 +362,6 @@ antlrcpp::Any Linearize_optimized::visitExprMulDivMod(ifccParser::ExprMulDivModC
                 cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, "!reg", resultLeft));
                 cfg->current_bb->add_IRInstr(new IRInstrDiv(cfg->current_bb, tmp1));
                 return nullptr;
-                // exit(1);
             } 
             return (int) (resultLeft / resultRight);
         }
@@ -461,11 +466,11 @@ antlrcpp::Any Linearize_optimized::visitExprAddSub(ifccParser::ExprAddSubContext
 
 
 antlrcpp::Any Linearize_optimized::visitCall(ifccParser::CallContext *ctx) {
-    //Obtention du label de la fonction
+    // Get the label of the function
     string label = ctx->VAR()->getText();
     vector<string> params;
 
-    //Obtention des params
+    // Get the params
     for (auto expression : ctx->liste_param()->expr()) {
         string tmp = cfg->create_new_tempvar();
         auto e = this->visit(expression);
@@ -479,7 +484,7 @@ antlrcpp::Any Linearize_optimized::visitCall(ifccParser::CallContext *ctx) {
         params.push_back(tmp);
     }
 
-    //Ajouter l'instruction call
+    // Add a call instruction
     cfg->current_bb->add_IRInstr(new IrInstrCall(cfg->current_bb, label, params));
     
    
@@ -1008,6 +1013,7 @@ antlrcpp::Any Linearize_optimized::visitExprShift(ifccParser::ExprShiftContext *
     bool leftConst = false , rightConst= false;
     string tmp1;
     
+    // Visit the first expression
     auto e2 = this->visit(ctx->expr()[1]);
     // If we get a constant value
     if (e2.is<int>()) {
@@ -1020,30 +1026,12 @@ antlrcpp::Any Linearize_optimized::visitExprShift(ifccParser::ExprShiftContext *
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
     }
 
+    // Visit the second expression
     auto e1 = this->visit(ctx->expr()[0]);
     if (e1.is<int>()) {
         resultLeft = e1.as<int>();
         leftConst= true;
     }
-    
-
-    // if (rightConst && resultRight==0 ) // If .. + or - 0
-    // {
-    //     if (!leftConst) // if a + or - 0 (value of a already in reg)
-    //     {
-    //         return nullptr;
-    //     }
-        
-    // }
-    // if (leftConst && resultLeft == 0)
-    // {
-    //     if (ctx->opA()->PLUS() && !rightConst) // If  0+a // we just put a that is in tmp1 in reg 
-    //     {
-    //         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb,"!reg" ,tmp1 ));
-    //         return nullptr;
-    //     }
-        
-    // }
     
     if (leftConst && rightConst) // If we have both constant
     {
@@ -1063,7 +1051,7 @@ antlrcpp::Any Linearize_optimized::visitExprShift(ifccParser::ExprShiftContext *
         
     }
 
-
+    // Add a shift instruction depending on the operator
     if (ctx->opS()->SHL()) {
         cfg->current_bb->add_IRInstr(new IRInstrSHL(cfg->current_bb, tmp1, "!reg"));
     }
@@ -1080,6 +1068,7 @@ antlrcpp::Any Linearize_optimized::visitExprAndBit(ifccParser::ExprAndBitContext
     bool leftConst = false , rightConst= false;
     string tmp1;
     
+    // Visit the first expression
     auto e1 = this->visit(ctx->expr(0));
     // If we get a constant value
     if (e1.is<int>()) {
@@ -1092,6 +1081,7 @@ antlrcpp::Any Linearize_optimized::visitExprAndBit(ifccParser::ExprAndBitContext
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
     }
 
+    // Visit the second expression
     auto e2 = this->visit(ctx->expr(1));
     if (e2.is<int>()) {
         resultRight = e2.as<int>();
@@ -1126,6 +1116,7 @@ antlrcpp::Any Linearize_optimized::visitExprOrBit(ifccParser::ExprOrBitContext *
     bool leftConst = false , rightConst= false;
     string tmp1;
     
+    // Visit the first expression
     auto e1 = this->visit(ctx->expr(0));
     // If we get a constant value
     if (e1.is<int>()) {
@@ -1138,6 +1129,7 @@ antlrcpp::Any Linearize_optimized::visitExprOrBit(ifccParser::ExprOrBitContext *
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
     }
 
+    // Visit the second expression
     auto e2 = this->visit(ctx->expr(1));
     if (e2.is<int>()) {
         resultRight = e2.as<int>();
@@ -1172,6 +1164,7 @@ antlrcpp::Any Linearize_optimized::visitExprXorBit(ifccParser::ExprXorBitContext
     bool leftConst = false , rightConst= false;
     string tmp1;
     
+    // Visit the first expression
     auto e1 = this->visit(ctx->expr(0));
     // If we get a constant value
     if (e1.is<int>()) {
@@ -1184,6 +1177,7 @@ antlrcpp::Any Linearize_optimized::visitExprXorBit(ifccParser::ExprXorBitContext
         cfg->current_bb->add_IRInstr(new IRInstrCopy(cfg->current_bb, tmp1, "!reg"));
     }
 
+    // Visit the second expression
     auto e2 = this->visit(ctx->expr(1));
     if (e2.is<int>()) {
         resultRight = e2.as<int>();

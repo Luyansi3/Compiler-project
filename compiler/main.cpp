@@ -83,7 +83,7 @@ int main(int argn, const char **argv)
   table.visit(tree);
 
 
-  //Vérif de declration et utilisation de toutes les fonctions
+  // Verify the declaration and usage of all functions
   for (auto it=table.symbolTableFonction.begin(); it != table.symbolTableFonction.end(); it++) {
     if (!it->second.declared) {
       cerr << "Fonction " << it->first << " n'est pas déclarée" << endl;
@@ -94,7 +94,7 @@ int main(int argn, const char **argv)
       
   }
 
-  //Vérfi d'utilisation des variables
+  // Verify the usage of all variables
   for (CFG *cfg : table.cfg_liste) {
     for (auto it=cfg->getSymbolIndex().begin(); it != cfg->getSymbolIndex().end(); ++it){
       if (!it->second.used && it->first != "!returnVal")
@@ -111,10 +111,9 @@ int main(int argn, const char **argv)
     }
   }
 
-  // Generate assembly code
   cout << ".globl main\n" ;
 
-  //Create the control flow graph (CFG) using the symbol table
+  // Create the control flow graph (CFG) using the symbol table and generate assembly code
   for (CFG *cfg : table.cfg_liste) {
     if (optimized)
     {

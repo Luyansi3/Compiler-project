@@ -5,7 +5,7 @@ using namespace std;
 #include "generated/ifccBaseVisitor.h"
 #include "IR.h"
 
-// Class to Linearize_optimized the parse tree into intermediate representation (IR)
+// Class to Linearize_optimized the parse tree into intermediate representation (IR) with optimizations
 class Linearize_optimized : public ifccBaseVisitor
 {
 private:

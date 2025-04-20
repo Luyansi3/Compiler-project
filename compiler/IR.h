@@ -367,7 +367,7 @@ public:
     string getNameFunction() { return nameFunction; }
     unordered_map<string, FlagVar> &getSymbolIndex() {return symbolIndex;}
     int getNextFreeSymbolIndex() {return nextFreeSymbolIndex;}
-    string getVarName(string name, string scopeString);
+    string getVarName(string name, string scopeString); // Get the "true" name of a variable with its scope
 
     string new_BB_name();
     BasicBlock *current_bb;
