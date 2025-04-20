@@ -110,13 +110,13 @@ The generated assembly code can then be assembled and linked using standard tool
 
 ## Testing Tool
 
-We provide a comprehensive testing framework to verify our compiler's behavior and performance. Test cases are organized by context in the `testfiles` folder.
+We provide a comprehensive testing framework to verify our compiler's behavior and performance. Test cases are organized by context in the `testfiles` folder. We also tested our compiler using the test files of hexanome 23 in a separate folder.
 
 ### Running Tests
 
 After compiling the program, you can run tests using the following commands:
 
-#### Run all tests:
+#### Run all tests (excluding the ones from other hexanomes):
 ##### With no optimizations
 ```
 cd compiler
