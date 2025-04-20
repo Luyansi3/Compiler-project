@@ -173,8 +173,17 @@ antlrcpp::Any Linearize_optimized::visitTableAffectation(ifccParser::TableAffect
         i++;
     }
 
+    int size=0;
+    if (ctx->constante())
+    {
+        if (ctx->constante()->CONSTINT())
+            size = stoi(ctx->constante()->CONSTINT()->getText());
+        else
+            size = (int)ctx->constante()->CONSTCHAR()->getText()[1];
+    }
+
     // Load 0 in the array if the size is bigger than the number of elements
-    while (ctx->constante() && i < stoi(ctx->constante()->getText()))
+    while (i < size)
     {
         string tmpValue = cfg->create_new_tempvar();
         cfg->current_bb->add_IRInstr(new IRInstrLDConst(cfg->current_bb, tmpValue, 0)); // store 0 into tmpValue

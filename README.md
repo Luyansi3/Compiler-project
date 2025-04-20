@@ -93,7 +93,7 @@ Use the provided `Makefile` to build the project. The Makefile includes configur
 - `ANTLRINC`: Path to ANTLR include directory
 - `ANTLRLIB`: Path to ANTLR library directory
 
-The default `make` target is used to build the executable compiler program. The `make test`target can also be used to build the executable compiler program and to launch all of our tests at the same time. You can run these commands inside the *compiler* directory.
+The default `make` target is used to build the executable compiler program. The `make tests`target can also be used to build the executable compiler program and to launch all of our tests at the same time. You can run these commands inside the *compiler* directory.
 
 ### Project Structure
 ![Compiler Architecture](UML_class.jpeg "C Compiler Architecture")
@@ -120,12 +120,12 @@ After compiling the program, you can run tests using the following commands:
 ##### With no optimizations
 ```
 cd compiler
-make test
+make tests
 ```
 ##### With optimizations
 ```
 cd compiler
-make test_optimized
+make tests_optimized
 ```
 #### Run tests for a specific category:
 ```
@@ -146,7 +146,7 @@ The testing tool generates multiple output files in the `ifcc-test-output` direc
 
 This allows for easy comparison between our compiler and the GCC reference implementation.
 
-(Currently we have 9 tests not working over 420)  
+(Currently we have 17 tests not working over 504)  
 
 ## Examples
 

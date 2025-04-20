@@ -14,10 +14,10 @@ PATH_TEST_WRAPPER_OPTI = ../tests/ifcc-wrapper_optimized.sh
 
 default: all
 
-test: all
+tests: all
 	$(PYTHON)  $(PATH_TEST_FRAMEWORK) $(PATH_TEST_FILES)
 
-test_optimized: all
+tests_optimized: all
 	$(PYTHON)  $(PATH_TEST_FRAMEWORK) -w $(PATH_TEST_WRAPPER_OPTI) $(PATH_TEST_FILES)
 
 all: ifcc

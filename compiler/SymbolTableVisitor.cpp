@@ -110,7 +110,11 @@ antlrcpp::Any SymbolTableVisitor::visitTableAffectation(ifccParser::TableAffecta
     int exprListSize = (ctx->array_litteral()->expr()).size();
     if (ctx->constante())
     {
-        tableSize = stoi(ctx->constante()->getText());
+        if (ctx->constante()->CONSTINT())
+            tableSize = stoi(ctx->constante()->CONSTINT()->getText());
+        else
+            tableSize = (int)ctx->constante()->CONSTCHAR()->getText()[1];
+
         if (exprListSize > tableSize)
         {
             cerr << "Warning : Trop d'élément dans le tableau " << varName << endl;
@@ -482,7 +486,10 @@ antlrcpp::Any SymbolTableVisitor::visitClassicDeclaration(ifccParser::ClassicDec
     int val=0;
     if (ctx->constante())
     {
-        val=stoi(ctx->constante()->getText());
+        if (ctx->constante()->CONSTINT())
+            val = stoi(ctx->constante()->CONSTINT()->getText());
+        else
+            val = (int)ctx->constante()->CONSTCHAR()->getText()[1];
         flagVar.isTable = true;
         this->index-=(val-1)*4;
     }
