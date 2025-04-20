@@ -39,9 +39,6 @@ antlrcpp::Any SymbolTableVisitor::visitProg(ifccParser::ProgContext *ctx)
 
     flag.nombreParams = 0;
     symbolTableFonction.insert({"getchar", flag});
-
-    
-
     
     //Visit all the fonctions declarations
     for (auto decl_fonction : ctx->pre_decl_fonction())
@@ -121,7 +118,6 @@ antlrcpp::Any SymbolTableVisitor::visitTableAffectation(ifccParser::TableAffecta
         
     }
 
-
     FlagVar flagVar;
 
     flagVar.index = index;
@@ -162,6 +158,7 @@ antlrcpp::Any SymbolTableVisitor::visitTableAffectation(ifccParser::TableAffecta
 
 antlrcpp::Any SymbolTableVisitor::visitArray_litteral(ifccParser::Array_litteralContext *ctx)
 {
+    // Visit all the expressions in the array literal
     for (auto &expression : ctx->expr())
     {
         this->visit(expression);
@@ -176,6 +173,8 @@ antlrcpp::Any SymbolTableVisitor::visitExprVar(ifccParser::ExprVarContext *ctx)
     bool find = false;
     string var = varName + "!" + scopeString;
 
+    // We are looking for the variable in the symbol table
+    // We are searching the right variables with the right scopes (shadowing if necessary)
     size_t pos_bang = var.find_last_of('!');
     size_t pos_ = var.find_last_of('_');
     while (pos_ > pos_bang && pos_ != string::npos)
@@ -215,6 +214,8 @@ antlrcpp::Any SymbolTableVisitor::visitExprTable(ifccParser::ExprTableContext *c
     bool find = false;
     string var = varName + "!" + scopeString;
 
+    // We are looking for the variable in the symbol table
+    // We are searching the right variables with the right scopes (shadowing if necessary)
     size_t pos_bang = var.find_last_of('!');
     size_t pos_ = var.find_last_of('_');
     while (pos_ > pos_bang && pos_ != string::npos)
@@ -257,6 +258,8 @@ antlrcpp::Any SymbolTableVisitor::visitCall(ifccParser::CallContext *ctx)
     string label = ctx->VAR()->getText();
     int nbParams = ctx->liste_param()->expr().size();
 
+    // Check if the function is declared with the correct number of parameters
+    // If the function is not declared, we add it to the symbol table with used = true and check later if it is declared after the main
     if (symbolTableFonction.find(label) == symbolTableFonction.end())
     {
         FlagFonction flag;
@@ -442,6 +445,7 @@ antlrcpp::Any SymbolTableVisitor::visitExprCall(ifccParser::ExprCallContext *ctx
 
 
 ifccParser::CallContext* SymbolTableVisitor::isASimpleCall(ifccParser::ExprParContext *ctx) {
+    // Dealing with the case where we have a call inside a parenthesis
     if (auto callCtx = dynamic_cast<ifccParser::ExprCallContext *>(ctx->expr())) {
         return callCtx->call();
     } else if (auto parCtx = dynamic_cast<ifccParser::ExprParContext*>(ctx->expr())) {

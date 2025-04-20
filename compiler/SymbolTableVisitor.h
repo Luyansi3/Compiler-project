@@ -14,8 +14,8 @@ class CFG;
 class SymbolTableVisitor : public ifccBaseVisitor
 {
 public:
-    unordered_map<string, FlagVar> symbolTableVar;                  // Symbol table to store variable information. Just temporary
-    unordered_map<string, FlagFonction> symbolTableFonction; // Symbol Table to store the function. It is static because common to all Symbol Table.
+    unordered_map<string, FlagVar> symbolTableVar;                  // Symbol table to store variable information
+    unordered_map<string, FlagFonction> symbolTableFonction; // Symbol Table to store the functions.
     vector<CFG *> cfg_liste;                                 // List of the CFG built
     string scopeString;                                             // Store the current scope of where we are
     string nameCurrentFunction;
@@ -41,7 +41,6 @@ public:
         virtual antlrcpp::Any visitClassicDeclaration(ifccParser::ClassicDeclarationContext *ctx) override;
         virtual antlrcpp::Any visitArray_litteral(ifccParser::Array_litteralContext *ctx) override;
         virtual antlrcpp::Any visitExprTable(ifccParser::ExprTableContext *ctx) override;
-        int getIndex(){return index;}
     private:
         int index; // Index to keep track of variable positions
     
