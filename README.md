@@ -93,6 +93,8 @@ Use the provided `Makefile` to build the project. The Makefile includes configur
 - `ANTLRINC`: Path to ANTLR include directory
 - `ANTLRLIB`: Path to ANTLR library directory
 
+The default `make` target is used to build the executable compiler program. The `make test`target can also be used to build the executable compiler program and to launch all of our tests at the same time. You can run these commands inside the *compiler* directory.
+
 ### Project Structure
 ![Compiler Architecture](UML_class.jpeg "C Compiler Architecture")
 
@@ -164,3 +166,12 @@ int main() {
     return result;
 }
 ```
+
+## Team Members
+
+- BOUZIANE Abderrahmane
+- WIRANE Hamza
+- GRIGUER Mehdi
+- BEN BOUZID Selim
+- SANCHEZ Lucas
+- VIALLETON Rémi 

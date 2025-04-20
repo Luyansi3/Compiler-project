@@ -1,9 +1,5 @@
 #include "SymbolTableVisitor.h"
 
-// Declaration of the static attributes
-unordered_map<string, FlagFonction> SymbolTableVisitor::symbolTableFonction;
-vector<CFG *> SymbolTableVisitor::cfg_liste;
-
 antlrcpp::Any SymbolTableVisitor::visitBlock(ifccParser::BlockContext *ctx)
 {
 

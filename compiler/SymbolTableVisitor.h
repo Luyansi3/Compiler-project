@@ -15,8 +15,8 @@ class SymbolTableVisitor : public ifccBaseVisitor
 {
 public:
     unordered_map<string, FlagVar> symbolTableVar;                  // Symbol table to store variable information. Just temporary
-    static unordered_map<string, FlagFonction> symbolTableFonction; // Symbol Table to store the function. It is static because common to all Symbol Table.
-    static vector<CFG *> cfg_liste;                                 // List of the CFG built
+    unordered_map<string, FlagFonction> symbolTableFonction; // Symbol Table to store the function. It is static because common to all Symbol Table.
+    vector<CFG *> cfg_liste;                                 // List of the CFG built
     string scopeString;                                             // Store the current scope of where we are
     string nameCurrentFunction;
     unordered_map<string, int> scope; // store a counter of blocks for a certain depth

@@ -84,7 +84,7 @@ int main(int argn, const char **argv)
 
 
   //Vérif de declration et utilisation de toutes les fonctions
-  for (auto it=SymbolTableVisitor::symbolTableFonction.begin(); it != SymbolTableVisitor::symbolTableFonction.end(); it++) {
+  for (auto it=table.symbolTableFonction.begin(); it != table.symbolTableFonction.end(); it++) {
     if (!it->second.declared) {
       cerr << "Fonction " << it->first << " n'est pas déclarée" << endl;
       exit(1);
@@ -95,7 +95,7 @@ int main(int argn, const char **argv)
   }
 
   //Vérfi d'utilisation des variables
-  for (CFG *cfg : SymbolTableVisitor::cfg_liste) {
+  for (CFG *cfg : table.cfg_liste) {
     for (auto it=cfg->getSymbolIndex().begin(); it != cfg->getSymbolIndex().end(); ++it){
       if (!it->second.used && it->first != "!returnVal")
       {
@@ -115,7 +115,7 @@ int main(int argn, const char **argv)
   cout << ".globl main\n" ;
 
   //Create the control flow graph (CFG) using the symbol table
-  for (CFG *cfg : SymbolTableVisitor::cfg_liste) {
+  for (CFG *cfg : table.cfg_liste) {
     if (optimized)
     {
       Linearize_optimized code(cfg);

@@ -153,6 +153,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+// CLass for function call
 class IrInstrCall : public IRInstr
 {
 private:
@@ -164,7 +165,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
-
+// Class for unconditional jump
 class IRInstrJump : public IRInstr
 {
 private:
@@ -175,6 +176,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+// Class for writing to array
 class IRInstrMem : public IRInstr
 {
 private:
@@ -189,6 +191,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+// Class for reading from array
 class IRInstrCopyMem : public IRInstr
 {
 private:
@@ -201,32 +204,8 @@ public:
 
     virtual void gen_asm(ostream &o) override;
 };
-/**  The class for a basic block */
 
-/* A few important comments.
-     IRInstr has no jump instructions.
-     cmp_* instructions behaves as an arithmetic two-operand instruction (add or mult),
-      returning a boolean value (as an int)
-
-     Assembly jumps are generated as follows:
-     BasicBlock::gen_asm() first calls IRInstr::gen_asm() on all its instructions, and then
-            if  exit_true  is a  nullptr,
-            the epilogue is generated
-        else if exit_false is a nullptr,
-          an unconditional jmp to the exit_true branch is generated
-                else (we have two successors, hence a branch)
-          an instruction comparing the value of test_var_name to true is generated,
-                    followed by a conditional branch to the exit_false branch,
-                    followed by an unconditional branch to the exit_true branch
-     The attribute test_var_name itself is defined when converting
-  the if, while, etc of the AST  to IR.
-
-Possible optimization:
-     a cmp_* comparison instructions, if it is the last instruction of its block,
-       generates an actual assembly comparison
-       followed by a conditional jump to the exit_false branch
-*/
-
+// Class for equal comparison
 class IRInstrCmpEQ : public IRInstr
 {
 private:
@@ -238,6 +217,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+// Class for not equal comparison
 class IRInstrCmpNEQ : public IRInstr
 {
 private:
@@ -249,6 +229,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+// Class for less than comparison
 class IRInstrCmpINF : public IRInstr
 {
 private:
@@ -260,6 +241,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+// Class for more than comparison
 class IRInstrCmpSUP : public IRInstr
 {
 private:
@@ -271,6 +253,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+// Class for logical negation
 class IRInstrNot : public IRInstr
 {
 private:
@@ -281,6 +264,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+// Class for left shift
 class IRInstrSHL : public IRInstr
 {
 private:
@@ -291,6 +275,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+// Class for right shift
 class IRInstrSHR : public IRInstr
 {
 private:
@@ -301,6 +286,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+// Class for bitwise AND
 class IRInstrAndBit : public IRInstr
 {
 private:
@@ -311,6 +297,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+// Class for bitwise OR
 class IRInstrOrBit : public IRInstr
 {
 private:
@@ -321,6 +308,7 @@ public:
     virtual void gen_asm(ostream &o) override;
 };
 
+// Class for bitwise XOR
 class IRInstrXorBit : public IRInstr
 {
 private:
@@ -330,6 +318,19 @@ public:
     IRInstrXorBit(BasicBlock *bb, string src, string dest) : IRInstr(bb), src(src), dest(dest) {}
     virtual void gen_asm(ostream &o) override;
 };
+
+// Class for modulo operation
+class IRInstrMod : public IRInstr {
+    public:
+        IRInstrMod(BasicBlock *bb, string src2)
+            : IRInstr(bb), src2(src2) {}
+    
+        void gen_asm(ostream &o) override;
+    
+    private:
+          
+       string src2;
+    };
 
 /** The class for a basic block */
 class BasicBlock
@@ -346,7 +347,6 @@ public:
     CFG *cfg;                 /**< the CFG where this block belongs */
     vector<IRInstr *> instrs; /**< the instructions themselves */
     string test_var_name;     /**< when generating IR code for an if(expr) or while(expr) etc, store here the name of the variable that holds the value of expr */
-    bool isExit;
 };
 
 /** The class for the control flow graph, also includes the symbol table */
@@ -357,20 +357,14 @@ public:
     ~CFG();
 
     void add_bb(BasicBlock *bb);
-
-    // x86 code generation: could be encapsulated in a processor class in a retargetable compiler
     void gen_asm(ostream &o);
     string IR_reg_to_asm(string reg); /**< helper method: inputs an IR reg or input variable, returns e.g. "-24(%rbp)" for the proper value of 24 */
-    void gen_asm_prologue(ostream &o);
-    void gen_asm_epilogue(ostream &o);
-    // void genrateExitAsm(ostream&o);
     string create_return_var();
     string create_new_tempvar();
 
     antlr4::tree::ParseTree* getTree() {return tree;}
 
     string getNameFunction() { return nameFunction; }
-    vector<BasicBlock*> getBbs() {return bbs;}
     unordered_map<string, FlagVar> &getSymbolIndex() {return symbolIndex;}
     int getNextFreeSymbolIndex() {return nextFreeSymbolIndex;}
     string getVarName(string name, string scopeString);
@@ -388,16 +382,4 @@ protected:
     antlr4::tree::ParseTree* tree;
     vector<BasicBlock *> bbs;                /**< all the basic blocks of this CFG */
 };
-
-class IRInstrMod : public IRInstr {
-    public:
-        IRInstrMod(BasicBlock *bb, string src2)
-            : IRInstr(bb), src2(src2) {}
-    
-        void gen_asm(ostream &o) override;
-    
-    private:
-          
-       string src2;  // Diviseur
-    };
      

@@ -26,16 +26,15 @@ void IRInstrNeg::gen_asm(ostream &o)
 // Generate assembly code for the function prologue
 void IRInstrPrologue::gen_asm(ostream &o)
 {
-    // Prologue classqieu
     o << "    pushq %rbp \n";
     o << "    movq %rsp, %rbp\n";
 
-    // Allouer la mémoire
+    // Setup memory
     int offset = -bb->cfg->getNextFreeSymbolIndex();
     offset += (16 - ((offset) % 16));
     o << "    subq $" << offset << ", " << "%rsp\n";
 
-    // Recuperation des 6 premiers params
+    // Get the 6 first parameters
     for (int i = 1; i <= bb->cfg->nbParams && i < 7; i++)
     {
         if (i == 1)
@@ -52,10 +51,10 @@ void IRInstrPrologue::gen_asm(ostream &o)
             o << "    movl" << " " << "%r9d" << ", " << -4 * i << "(%rbp)" << "\n";
     }
 
-    // Recuperation sur la pile des autres params
+    // Get the remaining parameters on the stack
     for (int i = 7; i <= bb->cfg->nbParams; i++)
     {
-        o << "    movl" << " " << 16 + 8 * (i - 7) << "(%rbp)" << ", " << "%eax" << "\n"; // A regler le probleme des offsets.
+        o << "    movl" << " " << 16 + 8 * (i - 7) << "(%rbp)" << ", " << "%eax" << "\n";
         o << "    movl" << " " << "%eax" << ", " << -4 * i << "(%rbp)" << "\n";
     }
 }
@@ -66,7 +65,8 @@ void IRInstrEpilogue::gen_asm(ostream &o)
     string source = this->bb->cfg->IR_reg_to_asm("!returnVal");
 
     o << "    movl " << source << ", %eax" << "\n";
-    // Remettre rsp à son état initial
+
+    // Put rsp back to its original state
     int offset = -bb->cfg->getNextFreeSymbolIndex();
     offset += (16 - ((offset) % 16));
     o << "    addq $" << offset << ", " << "%rsp\n";
@@ -107,11 +107,13 @@ void IRInstrSub::gen_asm(ostream &o)
     o << "    subl " << source1 << ", " << source2 << "\n";
 }
 
+// Generate assembly code for a,function call
 void IrInstrCall::gen_asm(ostream &o)
 {
     bool non_aligned = params.size() > 6 && params.size() % 2;
     int pushed = 0;
 
+    // Move the 6 first parameters to the registers
     for (int i = 0; i < 6 && i < params.size(); i++)
     {
         string param = this->bb->cfg->IR_reg_to_asm(params[i]);
@@ -129,6 +131,7 @@ void IrInstrCall::gen_asm(ostream &o)
             o << "    movl" << " " << param << ", " << "%r9d" << "\n";
     }
 
+    // Push the remaining parameters on the stack
     for (int i = params.size() - 1; i >= 6; i--)
     {
         pushed++;
@@ -136,6 +139,7 @@ void IrInstrCall::gen_asm(ostream &o)
         o << "    pushq" << " " << param << "\n";
     }
 
+    // Align the stack if needed
     if (non_aligned)
         o << "    subq $8, " << "%rsp\n";
 
@@ -187,6 +191,7 @@ void IRInstrCmpSUP::gen_asm(ostream &o)
     o << "    movzbl %al, %eax\n";
 }
 
+// Generate assembly code for writing to the memory address of the array
 void IRInstrMem::gen_asm(ostream &o)
 {
     string srcReg = bb->cfg->IR_reg_to_asm(src);     // value to store, in memory (-16(%rbp))
@@ -202,20 +207,19 @@ void IRInstrMem::gen_asm(ostream &o)
     else
         displacement = 0; // Just in case
 
-    // // Step 1: Load the index from memory into %ecx
-    // o << "    movl " << indexReg << ", %rcx" << "\n";
-    // Charger l'index (valeur de i) en %ecx (32 bits)
+    //Load the index from memory into %ecx
     o << "    movl " << indexReg << ", %ecx\n";
 
-    // Étendre %ecx (32 bits) en %rcx (64 bits)
     o << "    movslq %ecx, %rcx\n";
 
     o << "    movl " << srcReg << ", %eax" << "\n";
     o << "    neg %rcx\n";
-    // Step 3: Store %eax into displacement(%rbp, %ecx, 4)
+    // Store %eax into displacement(%rbp, %ecx, 4)
     o << "    movl %eax, " << displacement << "(%rbp, %rcx, 4)" << "\n";
 }
 
+
+// Generate assembly code for reading the memory address of the array
 void IRInstrCopyMem::gen_asm(ostream &o)
 {
     string indexReg = bb->cfg->IR_reg_to_asm(index); // index is memory, like -16(%rbp)
@@ -224,21 +228,20 @@ void IRInstrCopyMem::gen_asm(ostream &o)
     int displacement = 0;
     size_t pos = baseStr.find('(');
     displacement = stoi(baseStr.substr(0, pos));
-    // o << "movl " << indexReg << ", %rcx\n";
-    // Charger l'index (valeur de i) en %ecx (32 bits)
     o << "    movl " << indexReg << ", %ecx\n";
 
-    // Étendre %ecx (32 bits) en %rcx (64 bits)
     o << "    movslq %ecx, %rcx\n";
     o << "    neg %rcx\n";
     o << "    movl " << displacement << "(%rbp," << "%rcx, 4), %eax\n";
 }
 
+// Generate assembly code for an unconditional jump to a label
 void IRInstrJump::gen_asm(ostream &o)
 {
     o << "    jmp " << label << "\n";
 }
 
+// Generate assembly code for logical NOT
 void IRInstrNot::gen_asm(ostream &o)
 {
     string d = bb->cfg->IR_reg_to_asm(src);
@@ -247,6 +250,7 @@ void IRInstrNot::gen_asm(ostream &o)
     o << "    movsbl %al, %eax" << "\n";
 }
 
+// Generate assembly code for left shift
 void IRInstrSHL::gen_asm(ostream &o) {
     string s = bb->cfg->IR_reg_to_asm(src);
     string c = bb->cfg->IR_reg_to_asm(count);
@@ -256,6 +260,7 @@ void IRInstrSHL::gen_asm(ostream &o) {
     o << "    movl %edx, %eax" << "\n";
 }
 
+// Generate assembly code for right shift
 void IRInstrSHR::gen_asm(ostream &o) {
     string s = bb->cfg->IR_reg_to_asm(src);
     string c = bb->cfg->IR_reg_to_asm(count);
@@ -265,22 +270,35 @@ void IRInstrSHR::gen_asm(ostream &o) {
     o << "    movl %edx, %eax" << "\n";
 }
 
+// Generate assembly code for bitwise AND
 void IRInstrAndBit::gen_asm(ostream &o) {
     string s = bb->cfg->IR_reg_to_asm(src);
     string d = bb->cfg->IR_reg_to_asm(dest);
     o << "    andl " << s << ", " << d << "\n";
 }
 
+// Generate assembly code for bitwise OR
 void IRInstrOrBit::gen_asm(ostream &o) {
     string s = bb->cfg->IR_reg_to_asm(src);
     string d = bb->cfg->IR_reg_to_asm(dest);
     o << "    orl " << s << ", " << d << "\n";
 }
 
+// Generate assembly code for bitwise XOR
 void IRInstrXorBit::gen_asm(ostream &o) {
     string s = bb->cfg->IR_reg_to_asm(src);
     string d = bb->cfg->IR_reg_to_asm(dest);
     o << "    xorl " << s << ", " << d << "\n";
+}
+
+// Generate assembly code for the modulo operation
+void IRInstrMod::gen_asm(ostream &o) {
+     
+    string reg_divisor = bb->cfg->IR_reg_to_asm(src2);  
+    
+    o << "    cltd\n";
+    o << "    idivl " << reg_divisor << "\n";
+    o << "    movl %edx, " << "%eax\n";
 }
 
 // Generate assembly code for a basic block and its instructions
@@ -342,12 +360,10 @@ string CFG::IR_reg_to_asm(string reg)
 // Generate assembly code for the CFG and its basic blocks
 void CFG::gen_asm(ostream &o)
 {
-    // gen_asm_prologue(o);
     for (auto &bb : bbs)
     {
         bb->gen_asm(o);
     }
-    // gen_asm_epilogue(o);
 }
 
 // Generate a new basic block name
@@ -355,22 +371,6 @@ string CFG::new_BB_name()
 {
     nextBBnumber++;
     return nameFunction + "_BB" + to_string(nextBBnumber);
-}
-
-// Generate assembly code for the function prologue
-void CFG::gen_asm_prologue(ostream &o)
-{
-    o << ".globl main\n";
-    o << " main: \n";
-    o << "    pushq %rbp \n";
-    o << "    movq %rsp, %rbp\n";
-}
-
-// Generate assembly code for the function epilogue
-void CFG::gen_asm_epilogue(ostream &o)
-{
-    o << "    popq %rbp\n";
-    o << "    ret\n";
 }
 
 // Create a new temporary variable
@@ -388,12 +388,6 @@ CFG::CFG(unordered_map<string, FlagVar> symbolIndex, string nameFunction, antlr4
     : symbolIndex(symbolIndex), nextBBnumber(0), nameFunction(nameFunction), tree(tree), nbParams(nbParams)
 
 {
-    // int next = 0;
-    // for (auto pair : symbolIndex)
-    // {
-    //     next = min(next, pair.second.index);
-    // }
-    // nextFreeSymbolIndex = next;
     BasicBlock *bb_prologue = new BasicBlock(this, nameFunction);
     bb_prologue->add_IRInstr(new IRInstrPrologue(bb_prologue));
     add_bb(bb_prologue);
@@ -421,7 +415,7 @@ CFG::~CFG()
     }
 }
 
-
+// Create the return variable for the function
 string CFG::create_return_var()
 {
     int next = 0;
@@ -436,6 +430,7 @@ string CFG::create_return_var()
     symbolIndex.insert({returnVar, flag});
     return returnVar;
 }
+
 // Get the variable index from the symbol table
 string CFG::getVarName(string name, string scopeString)
 {
@@ -456,21 +451,6 @@ string CFG::getVarName(string name, string scopeString)
     }
 
     return var;
-}
-
-// Génération du code assembleur pour le modulo
-void IRInstrMod::gen_asm(ostream &o) {
-     
-    string reg_divisor = bb->cfg->IR_reg_to_asm(src2);  // Diviseur 
-    
-
-    // Charger le dividende dans eax
-    
-    o << "    cltd\n"; // Étend eax en edx:eax pour division signée
-    o << "    idivl " << reg_divisor << "\n"; // Division signée : quotient dans eax, reste dans edx
-
-    // Stocker le reste (modulo) dans la destination
-    o << "    movl %edx, " << "%eax\n";
 }
 
 

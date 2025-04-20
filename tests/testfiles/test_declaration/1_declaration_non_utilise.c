@@ -2,5 +2,6 @@
 
 int main() {
     int a;
-    return 42;
+    a = 3;
+    return a;
 }
