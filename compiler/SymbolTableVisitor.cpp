@@ -112,8 +112,27 @@ antlrcpp::Any SymbolTableVisitor::visitTableAffectation(ifccParser::TableAffecta
     {
         if (ctx->constante()->CONSTINT())
             tableSize = stoi(ctx->constante()->CONSTINT()->getText());
-        else
-            tableSize = (int)ctx->constante()->CONSTCHAR()->getText()[1];
+        else{
+            string text = ctx->constante()->CONSTCHAR()->getText();
+            if (text.size() <= 2 )
+            {
+                cerr << "Error not a valid char" << endl;
+                exit(1);
+            }
+            
+            if (text.find("'\\n'") != string::npos) {
+                tableSize =  (int) '\n';  // Convert the escape sequence to the actual newline character
+            } 
+            else if (text.find("'\\t'")!= string::npos) {
+                tableSize =  (int) '\t';  // Convert to tab character
+            } 
+            else if (text.find("'\\r'")!= string::npos) {
+                tableSize =  (int) '\r';  // Convert to carriage return
+            }
+            else{
+                tableSize = (int) text[text.size()-2]; // Take the last char before the quote
+            }
+        }
 
         if (exprListSize > tableSize)
         {
@@ -488,8 +507,28 @@ antlrcpp::Any SymbolTableVisitor::visitClassicDeclaration(ifccParser::ClassicDec
     {
         if (ctx->constante()->CONSTINT())
             val = stoi(ctx->constante()->CONSTINT()->getText());
-        else
-            val = (int)ctx->constante()->CONSTCHAR()->getText()[1];
+        else{
+
+            string text = ctx->constante()->CONSTCHAR()->getText();
+            if (text.size() <= 2 )
+            {
+                cerr << "Error not a valid char" << endl;
+                exit(1);
+            }
+            
+            if (text.find("'\\n'") != string::npos) {
+                val =  (int) '\n';  // Convert the escape sequence to the actual newline character
+            } 
+            else if (text.find("'\\t'")!= string::npos) {
+                val =  (int) '\t';  // Convert to tab character
+            } 
+            else if (text.find("'\\r'")!= string::npos) {
+                val =  (int) '\r';  // Convert to carriage return
+            }
+            else{
+                val = (int) text[text.size()-2]; // Take the last char before the quote
+            }
+        }
         flagVar.isTable = true;
         this->index-=(val-1)*4;
     }

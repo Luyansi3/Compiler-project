@@ -104,7 +104,7 @@ WHILE: 'while' ;
 ELSE: 'else';
 VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
 CONSTINT : [0-9]+ ;
-CONSTCHAR : '\''[a-zA-Z0-9]'\'' ;
+CONSTCHAR : '\'' ( '\\' [btnrf\\'"0] | ~['\\\r\n] ) '\'' ;
 PLUSPLUS: '++';
 MOINSMOINS: '--';
 EQ: '==';

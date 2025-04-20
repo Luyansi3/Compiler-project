@@ -178,8 +178,29 @@ antlrcpp::Any Linearize_optimized::visitTableAffectation(ifccParser::TableAffect
     {
         if (ctx->constante()->CONSTINT())
             size = stoi(ctx->constante()->CONSTINT()->getText());
-        else
-            size = (int)ctx->constante()->CONSTCHAR()->getText()[1];
+        else{
+
+            string text = ctx->constante()->CONSTCHAR()->getText();
+            if (text.size() <= 2 )
+            {
+                cerr << "Error not a valid char" << endl;
+                exit(1);
+            }
+            
+            if (text.find("'\\n'") != string::npos) {
+                size =  (int) '\n';  // Convert the escape sequence to the actual newline character
+            } 
+            else if (text.find("'\\t'")!= string::npos) {
+                size =  (int) '\t';  // Convert to tab character
+            } 
+            else if (text.find("'\\r'")!= string::npos) {
+                size =  (int) '\r';  // Convert to carriage return
+            }
+            else{
+                size = (int) text[text.size()-2]; // Take the last char before the quote
+            }
+
+        }
     }
 
     // Load 0 in the array if the size is bigger than the number of elements
@@ -264,8 +285,27 @@ antlrcpp::Any Linearize_optimized::visitExprConst(ifccParser::ExprConstContext *
     if (ctx->constante()->CONSTINT())
         retval = stoi(ctx->constante()->CONSTINT()->getText());
     else
-        retval = (int)ctx->constante()->CONSTCHAR()->getText()[1];
-
+    {
+        string text = ctx->constante()->CONSTCHAR()->getText();
+        if (text.size() <= 2 )
+        {
+            cerr << "Error not a valid char" << endl;
+            exit(1);
+        }
+        
+        if (text.find("'\\n'") != string::npos) {
+            retval =  (int) '\n';  // Convert the escape sequence to the actual newline character
+        } 
+        else if (text.find("'\\t'")!= string::npos) {
+            retval =  (int) '\t';  // Convert to tab character
+        } 
+        else if (text.find("'\\r'")!= string::npos) {
+            retval =  (int) '\r';  // Convert to carriage return
+        }
+        else{
+            retval = (int) text[text.size()-2]; // Take the last char before the quote
+        }
+    }
 
     return (int) retval;
 }
